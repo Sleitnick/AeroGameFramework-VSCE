@@ -64,6 +64,10 @@ Be sure to install [Rojo](https://github.com/LPGhatguy/rojo), which will sync so
 
 ## Release Notes
 
+### Alpha 0.0.3
+
+- Documentation
+
 ### Alpha 0.0.2
 
 - Init sequence now includes `.luacheckrc` file
