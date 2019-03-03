@@ -115,7 +115,6 @@ export function activate(context: vscode.ExtensionContext) {
 	let agfStatusBarItem: vscode.StatusBarItem;
 
 	let agf = vscode.commands.registerCommand("extension.agfinit", async () => {
-		vscode.window.showInformationMessage("Hello from AGF!");
 		const createInternal = async () => {
 			await fsutil.createDirIfNotExist(path.join(PROJECT_ROOT, ".vscode"));
 			await fsutil.createFileIfNotExist(path.join(PROJECT_ROOT, ".vscode", "settings.json"), VSCODE_PROJECT_SETTINGS);
@@ -145,6 +144,7 @@ export function activate(context: vscode.ExtensionContext) {
 		await createLuacheckRc;
 		await creatingInternal;
 		await creatingDirStructure;
+		vscode.window.showInformationMessage("AeroGameFramework initialized");
 	});
 
 	let agfContextMenu = vscode.commands.registerCommand("extension.agfcontext", async () => {
