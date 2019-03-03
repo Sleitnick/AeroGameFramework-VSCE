@@ -38,7 +38,7 @@ export function createFileIfNotExist(filepath: string, data: string) {
 	});
 }
 
-export function createDirIfNotExist (dirpath: string) {
+export function createDirIfNotExist(dirpath: string) {
 	return doesFileExist(dirpath).then(exists => {
 		if (!exists) {
 			return new Promise<boolean>((resolve, reject) => {

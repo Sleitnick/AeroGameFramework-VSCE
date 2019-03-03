@@ -5,6 +5,7 @@ import * as path from "path";
 import * as filelist from "./filelist";
 import * as fsutil from "./fsutil";
 import * as templates from "./templates";
+import * as luacheckrc from "./luacheckrc";
 
 const VERSION = process.env.npm_package_version;
 
@@ -107,8 +108,6 @@ const getPath = (root: string, env: string, type: string, name: string) => {
 	return path.join(root, QUICK_PICK_FILEPATHS[env][type], name);
 };
 
-// this method is called when your extension is activated
-// your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
 
 	const PROJECT_ROOT = vscode.workspace.workspaceFolders![0].uri.fsPath;
@@ -137,11 +136,13 @@ export function activate(context: vscode.ExtensionContext) {
 		};
 		const createAgf = fsutil.createFileIfNotExist(path.join(PROJECT_ROOT, ".agf"), AGF_FILE);
 		const creatingRojo = fsutil.createFileIfNotExist(path.join(PROJECT_ROOT, "rojo.json"), ROJO_FILE);
+		const createLuacheckRc = fsutil.createFileIfNotExist(path.join(PROJECT_ROOT, ".luacheckrc"), luacheckrc.source());
 		const creatingInternal = createInternal();
 		await filelist.loadFilelist();
 		const creatingDirStructure = createDirStructure(AGF_DIR_STRUCTURE, PROJECT_ROOT);
 		await createAgf;
 		await creatingRojo;
+		await createLuacheckRc;
 		await creatingInternal;
 		await creatingDirStructure;
 	});
@@ -189,7 +190,6 @@ export function activate(context: vscode.ExtensionContext) {
 	
 }
 
-// this method is called when your extension is deactivated
 export function deactivate() {
 
 }
