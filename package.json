@@ -1,13 +1,17 @@
 {
 	"name": "aerogameframework",
 	"displayName": "AeroGameFramework",
-	"version": "0.0.6",
+	"version": "0.0.7",
 	"description": "VSC extension for AeroGameFramework",
 	"author": {
 		"name": "Stephen Leitnick"
 	},
 	"publisher": "aerogameframework-vsce",
 	"icon": "resources/logo_256.png",
+	"galleryBanner": {
+		"color": "#31597F",
+		"theme": "dark"
+	},
 	"license": "MIT",
 	"bugs": {
 		"url": "https://github.com/Sleitnick/AeroGameFramework-VSCE/issues"
