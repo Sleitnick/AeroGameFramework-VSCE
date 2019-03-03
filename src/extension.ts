@@ -7,8 +7,6 @@ import * as fsutil from "./fsutil";
 import * as templates from "./templates";
 import * as luacheckrc from "./luacheckrc";
 
-const VERSION = process.env.npm_package_version;
-
 const QUICK_PICK_ENV: string[] = ["Server", "Client", "Shared"];
 const QUICK_PICK_TYPES: {[env: string]: string[]} = {
 	"Server": ["Service", "Module"],
@@ -93,8 +91,7 @@ const ROJO_FILE = JSON.stringify({
 }, null, 2);
 
 const AGF_FILE = JSON.stringify({
-	"agf": true,
-	"version": VERSION
+	"agf": true
 }, null, 2);
 
 const VSCODE_PROJECT_SETTINGS = JSON.stringify({
@@ -112,7 +109,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	let agfStatusBarItem: vscode.StatusBarItem;
 
-	let agf = vscode.commands.registerCommand("extension.agfinit", async () => {
+	const agf = vscode.commands.registerCommand("extension.agfinit", async () => {
 		const PROJECT_ROOT = vscode.workspace.workspaceFolders![0].uri.fsPath;
 		const createInternal = async () => {
 			await fsutil.createDirIfNotExist(path.join(PROJECT_ROOT, ".vscode"));
@@ -146,7 +143,7 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.window.showInformationMessage("AeroGameFramework initialized");
 	});
 
-	let agfContextMenu = vscode.commands.registerCommand("extension.agfcontext", async () => {
+	const agfContextMenu = vscode.commands.registerCommand("extension.agfcontext", async () => {
 		const PROJECT_ROOT = vscode.workspace.workspaceFolders![0].uri.fsPath;
 		const selectionEnv = await vscode.window.showQuickPick(QUICK_PICK_ENV, {canPickMany: false});
 		const selectionType = selectionEnv && await vscode.window.showQuickPick(QUICK_PICK_TYPES[selectionEnv], {canPickMany: false});
@@ -183,9 +180,7 @@ export function activate(context: vscode.ExtensionContext) {
 	agfStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
 	agfStatusBarItem.command = "extension.agfcontext";
 	agfStatusBarItem.text = "$(code) AGF";
-	context.subscriptions.push(agfStatusBarItem);
-	context.subscriptions.push(agf);
-	context.subscriptions.push(agfContextMenu);
+	context.subscriptions.push(agf, agfContextMenu, agfStatusBarItem);
 	agfStatusBarItem.show();
 	
 }
