@@ -6,7 +6,7 @@
 	"author": {
 		"name": "Stephen Leitnick"
 	},
-	"publisher": "sleitnick",
+	"publisher": "aerogameframework-vsce",
 	"icon": "resources/logo_256.png",
 	"license": "MIT",
 	"bugs": {
