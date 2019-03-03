@@ -1,0 +1,78 @@
+{
+	"name": "aerogameframework",
+	"displayName": "AeroGameFramework",
+	"version": "0.0.1",
+	"description": "VSC extension for AeroGameFramework",
+	"author": {
+		"name": "Stephen Leitnick"
+	},
+	"icon": "resources/logo_256.png",
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/Sleitnick/AeroGameFramework-VSCE/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/Sleitnick/AeroGameFramework-VSCE"
+	},
+	"homepage": "https://github.com/Sleitnick/AeroGameFramework-VSCE/blob/master/README.md",
+	"engines": {
+		"vscode": "^1.31.0"
+	},
+	"categories": [
+		"Other"
+	],
+	"activationEvents": [
+		"onCommand:extension.agfinit",
+		"workspaceContains:*.agf"
+	],
+	"main": "./out/extension.js",
+	"contributes": {
+		"commands": [
+			{
+				"command": "extension.agfinit",
+				"title": "AeroGameFramework: Initialize"
+			},
+			{
+				"command": "extension.agfcontext",
+				"title": "AeroGameFramework: Create"
+			}
+		],
+		"menus": {
+			"explorer/context": [
+				{
+					"command": "extension.agfcontext",
+					"group": "2_workspace"
+				}
+			]
+		},
+		"configuration": {
+			"type": "object",
+			"title": "AeroGameFramework Configuration",
+			"properties": {
+				"agf.username": {
+					"type": "string",
+					"default": "Username",
+					"description": "Username appended to new source files"
+				}
+			}
+		}
+	},
+	"scripts": {
+		"vscode:prepublish": "npm run compile",
+		"compile": "tsc -p ./",
+		"watch": "tsc -watch -p ./",
+		"postinstall": "node ./node_modules/vscode/bin/install",
+		"test": "npm run compile && node ./node_modules/vscode/bin/test"
+	},
+	"devDependencies": {
+		"typescript": "^3.3.1",
+		"vscode": "^1.1.28",
+		"tslint": "^5.12.1",
+		"@types/node": "^10.12.21",
+		"@types/mocha": "^2.2.42",
+		"@types/node-fetch": "^2.1.6",
+		"node-fetch": "^2.3.0",
+		"moment": "^2.24.0"
+	}
+}
