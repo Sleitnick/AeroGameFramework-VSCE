@@ -110,11 +110,10 @@ const getPath = (root: string, env: string, type: string, name: string) => {
 
 export function activate(context: vscode.ExtensionContext) {
 
-	const PROJECT_ROOT = vscode.workspace.workspaceFolders![0].uri.fsPath;
-
 	let agfStatusBarItem: vscode.StatusBarItem;
 
 	let agf = vscode.commands.registerCommand("extension.agfinit", async () => {
+		const PROJECT_ROOT = vscode.workspace.workspaceFolders![0].uri.fsPath;
 		const createInternal = async () => {
 			await fsutil.createDirIfNotExist(path.join(PROJECT_ROOT, ".vscode"));
 			await fsutil.createFileIfNotExist(path.join(PROJECT_ROOT, ".vscode", "settings.json"), VSCODE_PROJECT_SETTINGS);
@@ -148,6 +147,7 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 
 	let agfContextMenu = vscode.commands.registerCommand("extension.agfcontext", async () => {
+		const PROJECT_ROOT = vscode.workspace.workspaceFolders![0].uri.fsPath;
 		const selectionEnv = await vscode.window.showQuickPick(QUICK_PICK_ENV, {canPickMany: false});
 		const selectionType = selectionEnv && await vscode.window.showQuickPick(QUICK_PICK_TYPES[selectionEnv], {canPickMany: false});
 		const fileName = selectionType && selectionEnv && await vscode.window.showInputBox({
