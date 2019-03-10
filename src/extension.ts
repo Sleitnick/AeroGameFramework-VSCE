@@ -266,7 +266,7 @@ export function activate(context: vscode.ExtensionContext) {
 			vscode.window.showWarningMessage("Cannot created nested module in init file");
 			return;
 		}
-		const envType = await getEnvType(fileUri.fsPath);
+		const envType = await getEnvType(fileUri ? fileUri.fsPath : PROJECT_ROOT);
 		if (!envType) {
 			return;
 		}
