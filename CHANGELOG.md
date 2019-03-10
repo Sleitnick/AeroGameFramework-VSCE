@@ -1,6 +1,6 @@
 # Changelog
 
-## Alpha 0.0.1-8
+## Alpha 0.0.1-9
 
 - Dependency fix
 - Documentation

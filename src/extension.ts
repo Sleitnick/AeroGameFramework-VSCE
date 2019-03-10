@@ -101,10 +101,6 @@ const VSCODE_PROJECT_SETTINGS = JSON.stringify({
 	}
 }, null, 2);
 
-const getPath = (root: string, env: string, type: string, name: string): string => {
-	return path.join(root, QUICK_PICK_FILEPATHS[env][type], name);
-};
-
 const transformLuaIntoInit = async (filepath: string): Promise<string> => {
 	const dirpath = filepath.substring(0, filepath.lastIndexOf("."));
 	const ext = filepath.match(/(\.[0-9a-z]+)?\.[0-9a-z]+$/i)![0];
@@ -112,14 +108,6 @@ const transformLuaIntoInit = async (filepath: string): Promise<string> => {
 	await fsutil.copyFile(filepath, path.join(dirpath, "/init" + ext));
 	await fsutil.deleteFile(filepath);
 	return dirpath;
-};
-
-const getSuggestedEnvironment = () => {
-
-};
-
-const getSuggestedType = () => {
-
 };
 
 interface EnvTypeCustom {
@@ -159,7 +147,7 @@ const getEnvType = async (filepath: string): Promise<EnvType|null> => {
 	}
 	const isWithinSource = filepath.startsWith(srcDir);
 	if (isWithinSource && !environment && !type) {
-		// Determine where to put the file within the directory
+		// Determine where to put the file within the directory:
 		const ext = path.extname(filepath);
 		const isDir = (await fsutil.getFileType(filepath)) === fsutil.FsFileType.Directory;
 		if (isDir) {
@@ -283,16 +271,12 @@ export function activate(context: vscode.ExtensionContext) {
 			return;
 		}
 		if (envType.custom) {
-			console.log("Custom flow");
 			let dirpath: string;
 			let fileName: string | undefined;
 			if (envType.custom.isDir) {
-				console.log("> isDir");
 				dirpath = envType.custom.path;
 				fileName = await getSourceFileName(dirpath, "Nested", envType.type, true);
 			} else {
-				console.log("> transformIntoDir");
-				//dirpath = await transformLuaIntoInit(fileUri.fsPath);
 				fileName = await getSourceFileName(null, "Nested", envType.type, false);
 			}
 			if (fileName) {
@@ -311,7 +295,6 @@ export function activate(context: vscode.ExtensionContext) {
 				}
 			}
 		} else {
-			console.log("Standard flow");
 			const dirpath = path.join(PROJECT_ROOT, QUICK_PICK_FILEPATHS[envType.environment!][envType.type]);
 			const fileName = await getSourceFileName(dirpath, envType.environment!, envType.type, true);
 			if (fileName) {
@@ -327,49 +310,6 @@ export function activate(context: vscode.ExtensionContext) {
 				}
 			}
 		}
-		/*
-		const selectedFileType = (fileUri ? await fsutil.getFileType(fileUri.fsPath) : fsutil.FsFileType.None);
-		const selectedFileName = (fileUri ? fileUri.path.match(/\/[^\/]+$/)![0] : null);
-		const selectedFileExt = (selectedFileName && selectedFileName.includes(".") ? selectedFileName.match(/\.[0-9a-z]+$/i)![0] : null);
-		const selectedLuaFile = (selectedFileExt && selectedFileExt === ".lua");
-		const selectionEnv = (selectedLuaFile ? "Nested" : await vscode.window.showQuickPick(QUICK_PICK_ENV, {canPickMany: false}));
-		const selectionType = (selectedLuaFile ? "Module" : selectionEnv && await vscode.window.showQuickPick(QUICK_PICK_TYPES[selectionEnv], {canPickMany: false}));
-		const valuePrefix = "Name";
-		const fileName = selectionType && selectionEnv && await vscode.window.showInputBox({
-			placeHolder: ("My" + selectionType),
-			prompt: ("Create new " + selectionEnv + " " + selectionType),
-			value: (valuePrefix + selectionType),
-			valueSelection: [0, valuePrefix.length],
-			ignoreFocusOut: true,
-			validateInput: async (value: string) => {
-				if (value.match(/^\d/g)) {
-					return "Name cannot begin with a number";
-				} else if (value.match(/[^a-z0-9]/gi)) {
-					return "Name must be alpha-numeric";
-				}
-				return (!selectedLuaFile && await fsutil.doesFileExist(getPath(PROJECT_ROOT, selectionEnv, selectionType, `${value}.lua`))) ? `${value} already exists` : null;
-			}
-		});
-		if (fileName && selectionEnv && selectionType) {
-			let filePath: string;
-			if (selectedLuaFile) {
-				const dir = await transformLuaIntoInit(fileUri.fsPath);
-				filePath = path.join(dir, `${fileName}.lua`);
-			} else {
-				filePath = getPath(PROJECT_ROOT, selectionEnv, selectionType, `${fileName}.lua`);
-			}
-			const exists = await fsutil.doesFileExist(filePath);
-			if (exists) {
-				vscode.window.showErrorMessage(`${fileName} already exists`);
-			} else {
-				await fsutil.createFile(filePath, templates.getTemplate(selectionEnv, selectionType, fileName));
-				vscode.window.showInformationMessage(`Created ${fileName}`);
-				vscode.workspace.openTextDocument(filePath).then(doc => {
-					vscode.window.showTextDocument(doc);
-				});
-			}
-		}
-		*/
 	});
 
 	agfStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
