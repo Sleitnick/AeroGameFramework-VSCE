@@ -2,7 +2,13 @@
 
 import * as fs from "fs";
 
-export function doesFileExist(filepath: string) {
+export enum FsFileType {
+	None,
+	File,
+	Directory
+}
+
+export function doesFileExist(filepath: string): Promise<boolean> {
 	return new Promise<boolean>((resolve, reject) => {
 		fs.stat(filepath, err => {
 			if (err) {
@@ -13,6 +19,26 @@ export function doesFileExist(filepath: string) {
 				}
 			} else {
 				resolve(true);
+			}
+		});
+	});
+}
+
+export function getFileType(filepath: string): Promise<FsFileType> {
+	return new Promise<FsFileType>((resolve, reject) => {
+		fs.stat(filepath, (err, stats) => {
+			if (err) {
+				if (err.code === "ENOENT") {
+					resolve(FsFileType.None);
+				} else {
+					reject(err);
+				}
+			} else if (stats.isDirectory()) {
+				resolve(FsFileType.Directory);
+			} else if (stats.isFile()) {
+				resolve(FsFileType.File);
+			} else {
+				resolve(FsFileType.None);
 			}
 		});
 	});
@@ -53,5 +79,29 @@ export function createDirIfNotExist(dirpath: string) {
 		} else {
 			return false;
 		}
+	});
+}
+
+export function copyFile(srcfile: string, dstfile: string) {
+	return new Promise<void>((resolve, reject) => {
+		fs.copyFile(srcfile, dstfile, (err) => {
+			if (err) {
+				reject(err);
+			} else {
+				resolve();
+			}
+		});
+	});
+}
+
+export function deleteFile(filepath: string) {
+	return new Promise<void>((resolve, reject) => {
+		fs.unlink(filepath, (err) => {
+			if (err) {
+				reject(err);
+			} else {
+				resolve();
+			}
+		});
 	});
 }

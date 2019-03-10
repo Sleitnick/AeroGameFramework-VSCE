@@ -31,7 +31,11 @@ function header(name: string) {
 }
 
 export function getTemplate(env: string, type: string, name: string) {
-	return templateMapping[env][type](name);
+	if (templateMapping[env] && templateMapping[env][type]) {
+		return templateMapping[env][type](name);
+	} else {
+		return moduleTemplate(name);
+	}
 }
 
 export function serviceTemplate(name: string) {

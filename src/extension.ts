@@ -101,9 +101,138 @@ const VSCODE_PROJECT_SETTINGS = JSON.stringify({
 	}
 }, null, 2);
 
-const getPath = (root: string, env: string, type: string, name: string) => {
+const getPath = (root: string, env: string, type: string, name: string): string => {
 	return path.join(root, QUICK_PICK_FILEPATHS[env][type], name);
 };
+
+const transformLuaIntoInit = async (filepath: string): Promise<string> => {
+	const dirpath = filepath.substring(0, filepath.lastIndexOf("."));
+	const ext = filepath.match(/(\.[0-9a-z]+)?\.[0-9a-z]+$/i)![0];
+	await fsutil.createDirIfNotExist(dirpath);
+	await fsutil.copyFile(filepath, path.join(dirpath, "/init" + ext));
+	await fsutil.deleteFile(filepath);
+	return dirpath;
+};
+
+const getSuggestedEnvironment = () => {
+
+};
+
+const getSuggestedType = () => {
+
+};
+
+interface EnvTypeCustom {
+	isDir: boolean;
+	path: string;
+}
+
+interface EnvType {
+	environment?: string;
+	type: string;
+	custom?: EnvTypeCustom;
+}
+
+const getEnvType = async (filepath: string): Promise<EnvType|null> => {
+	const srcDir = path.join(vscode.workspace.workspaceFolders![0].uri.fsPath, "src");
+	let environment = null;
+	let type = null;
+	if (path.join(srcDir, "Client") === filepath) {
+		environment = "Client";
+	} else if (path.join(srcDir, "Client", "Modules") === filepath) {
+		environment = "Client";
+		type = "Module";
+	} else if (path.join(srcDir, "Client", "Controllers") === filepath) {
+		environment = "Client";
+		type = "Controller";
+	} else if (path.join(srcDir, "Server") === filepath) {
+		environment = "Server";
+	} else if (path.join(srcDir, "Server", "Modules") === filepath) {
+		environment = "Server";
+		type = "Module";
+	} else if (path.join(srcDir, "Server", "Services") === filepath) {
+		environment = "Server";
+		type = "Service";
+	} else if (path.join(srcDir, "Shared") === filepath) {
+		environment = "Shared";
+		type = "Module";
+	}
+	const isWithinSource = filepath.startsWith(srcDir);
+	if (isWithinSource && !environment && !type) {
+		// Determine where to put the file within the directory
+		const ext = path.extname(filepath);
+		const isDir = (await fsutil.getFileType(filepath)) === fsutil.FsFileType.Directory;
+		if (isDir) {
+			return {
+				type: "Module",
+				custom: {
+					isDir: true,
+					path: filepath
+				}
+			};
+		} else if (ext === ".lua") {
+			return {
+				type: "Module",
+				custom: {
+					isDir: false,
+					path: filepath
+				}
+			};
+		} else {
+			return null;
+		}
+	} else {
+		// Let user pick environment & type if not already implied from selected file:
+		if (!environment) {
+			environment = await vscode.window.showQuickPick(QUICK_PICK_ENV, {canPickMany: false});
+			if (!environment) {
+				return null;
+			}
+		}
+		if (!type) {
+			type = await vscode.window.showQuickPick(QUICK_PICK_TYPES[environment], {canPickMany: false});
+			if (!type) {
+				return null;
+			}
+		}
+	}
+	return {
+		environment: environment,
+		type: type
+	};
+};
+
+const getSourceFileName = async (dirpath: string | null, selectionEnv: string, selectionType: string, checkIfExists: boolean): Promise<string|undefined> => {
+	const valuePrefix = "Name";
+	const fileName = await vscode.window.showInputBox({
+		placeHolder: ("My" + selectionType),
+		prompt: ("Create new " + selectionEnv + " " + selectionType),
+		value: (valuePrefix + selectionType),
+		valueSelection: [0, valuePrefix.length],
+		validateInput: async (value: string) => {
+			value = value.trim();
+			if (value.match(/^\d/g)) {
+				return "Name cannot begin with a number";
+			} else if (value.match(/[^a-z0-9]/gi)) {
+				return "Name must be alpha-numeric";
+			} else if (value.toLowerCase() === "init") {
+				return "Name cannot be \"init\"";
+			}
+			return (checkIfExists && await fsutil.doesFileExist(path.join(dirpath!, `${value}.lua`))) ? `${value} already exists` : null;
+		}
+	});
+	if (fileName) {
+		return fileName.trim();
+	}
+};
+
+interface FileUri {
+	$mid: number;
+	fsPath: string;
+	external: string;
+	path: string;
+	scheme: string;
+}
 
 export function activate(context: vscode.ExtensionContext) {
 
@@ -143,15 +272,74 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.window.showInformationMessage("AeroGameFramework initialized");
 	});
 
-	const agfContextMenu = vscode.commands.registerCommand("extension.agfcontext", async () => {
+	const agfContextMenu = vscode.commands.registerCommand("extension.agfcontext", async (fileUri: FileUri) => {
 		const PROJECT_ROOT = vscode.workspace.workspaceFolders![0].uri.fsPath;
-		const selectionEnv = await vscode.window.showQuickPick(QUICK_PICK_ENV, {canPickMany: false});
-		const selectionType = selectionEnv && await vscode.window.showQuickPick(QUICK_PICK_TYPES[selectionEnv], {canPickMany: false});
+		if (fileUri && path.basename(fileUri.fsPath) === "init.lua") {
+			vscode.window.showWarningMessage("Cannot created nested module in init file");
+			return;
+		}
+		const envType = await getEnvType(fileUri.fsPath);
+		if (!envType) {
+			return;
+		}
+		if (envType.custom) {
+			console.log("Custom flow");
+			let dirpath: string;
+			let fileName: string | undefined;
+			if (envType.custom.isDir) {
+				console.log("> isDir");
+				dirpath = envType.custom.path;
+				fileName = await getSourceFileName(dirpath, "Nested", envType.type, true);
+			} else {
+				console.log("> transformIntoDir");
+				//dirpath = await transformLuaIntoInit(fileUri.fsPath);
+				fileName = await getSourceFileName(null, "Nested", envType.type, false);
+			}
+			if (fileName) {
+				if (!envType.custom.isDir) {
+					dirpath = await transformLuaIntoInit(fileUri.fsPath);
+				}
+				const filePath = path.join(dirpath!, `${fileName}.lua`);
+				const exists = await fsutil.doesFileExist(filePath);
+				if (exists) {
+					vscode.window.showErrorMessage(`${fileName} already exists`);
+				} else {
+					await fsutil.createFileIfNotExist(filePath, templates.moduleTemplate(fileName));
+					vscode.window.showInformationMessage(`Created ${fileName}`);
+					const doc = await vscode.workspace.openTextDocument(filePath);
+					vscode.window.showTextDocument(doc);
+				}
+			}
+		} else {
+			console.log("Standard flow");
+			const dirpath = path.join(PROJECT_ROOT, QUICK_PICK_FILEPATHS[envType.environment!][envType.type]);
+			const fileName = await getSourceFileName(dirpath, envType.environment!, envType.type, true);
+			if (fileName) {
+				const filePath = path.join(dirpath, `${fileName}.lua`);
+				const exists = await fsutil.doesFileExist(filePath);
+				if (exists) {
+					vscode.window.showErrorMessage(`${fileName} already exists`);
+				} else {
+					await fsutil.createFile(filePath, templates.getTemplate(envType.environment!, envType.type, fileName));
+					vscode.window.showInformationMessage(`Created ${fileName}`);
+					const doc = await vscode.workspace.openTextDocument(filePath);
+					vscode.window.showTextDocument(doc);
+				}
+			}
+		}
+		/*
+		const selectedFileType = (fileUri ? await fsutil.getFileType(fileUri.fsPath) : fsutil.FsFileType.None);
+		const selectedFileName = (fileUri ? fileUri.path.match(/\/[^\/]+$/)![0] : null);
+		const selectedFileExt = (selectedFileName && selectedFileName.includes(".") ? selectedFileName.match(/\.[0-9a-z]+$/i)![0] : null);
+		const selectedLuaFile = (selectedFileExt && selectedFileExt === ".lua");
+		const selectionEnv = (selectedLuaFile ? "Nested" : await vscode.window.showQuickPick(QUICK_PICK_ENV, {canPickMany: false}));
+		const selectionType = (selectedLuaFile ? "Module" : selectionEnv && await vscode.window.showQuickPick(QUICK_PICK_TYPES[selectionEnv], {canPickMany: false}));
+		const valuePrefix = "Name";
 		const fileName = selectionType && selectionEnv && await vscode.window.showInputBox({
 			placeHolder: ("My" + selectionType),
 			prompt: ("Create new " + selectionEnv + " " + selectionType),
-			value: "Name" + selectionType,
-			valueSelection: [0, 4],
+			value: (valuePrefix + selectionType),
+			valueSelection: [0, valuePrefix.length],
 			ignoreFocusOut: true,
 			validateInput: async (value: string) => {
 				if (value.match(/^\d/g)) {
@@ -159,11 +347,17 @@ export function activate(context: vscode.ExtensionContext) {
 				} else if (value.match(/[^a-z0-9]/gi)) {
 					return "Name must be alpha-numeric";
 				}
-				return (await fsutil.doesFileExist(getPath(PROJECT_ROOT, selectionEnv, selectionType, `${value}.lua`))) ? `${value} already exists` : null;
+				return (!selectedLuaFile && await fsutil.doesFileExist(getPath(PROJECT_ROOT, selectionEnv, selectionType, `${value}.lua`))) ? `${value} already exists` : null;
 			}
 		});
 		if (fileName && selectionEnv && selectionType) {
-			const filePath = getPath(PROJECT_ROOT, selectionEnv, selectionType,`${fileName}.lua`);
+			let filePath: string;
+			if (selectedLuaFile) {
+				const dir = await transformLuaIntoInit(fileUri.fsPath);
+				filePath = path.join(dir, `${fileName}.lua`);
+			} else {
+				filePath = getPath(PROJECT_ROOT, selectionEnv, selectionType, `${fileName}.lua`);
+			}
 			const exists = await fsutil.doesFileExist(filePath);
 			if (exists) {
 				vscode.window.showErrorMessage(`${fileName} already exists`);
@@ -175,6 +369,7 @@ export function activate(context: vscode.ExtensionContext) {
 				});
 			}
 		}
+		*/
 	});
 
 	agfStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
