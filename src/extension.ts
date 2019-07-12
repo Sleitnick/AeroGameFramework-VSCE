@@ -4,8 +4,28 @@ import * as vscode from "vscode";
 import * as path from "path";
 import * as filelist from "./filelist";
 import * as fsutil from "./fsutil";
-import * as templates from "./templates";
-import * as luacheckrc from "./luacheckrc";
+import * as luaTemplates from "./luaTemplates";
+import * as rojoTemplates from "./rojoTemplates";
+import luacheckrc from "./luacheckrc";
+
+interface EnvTypeCustom {
+	isDir: boolean;
+	path: string;
+}
+
+interface EnvType {
+	environment?: string;
+	type: string;
+	custom?: EnvTypeCustom;
+}
+
+interface FileUri {
+	$mid: number;
+	fsPath: string;
+	external: string;
+	path: string;
+	scheme: string;
+}
 
 const QUICK_PICK_ENV: string[] = ["Server", "Client", "Shared"];
 const QUICK_PICK_TYPES: {[env: string]: string[]} = {
@@ -16,14 +36,17 @@ const QUICK_PICK_TYPES: {[env: string]: string[]} = {
 const QUICK_PICK_FILEPATHS: {[env: string]: {[type: string]: string}} = {
 	"Server": {
 		"Service": "/src/Server/Services/",
-		"Module": "/src/Server/Modules/"
+		"Module": "/src/Server/Modules/",
+		"Class": "/src/Server/Modules/"
 	},
 	"Client": {
 		"Controller": "/src/Client/Controllers/",
-		"Module": "/src/Client/Modules/"
+		"Module": "/src/Client/Modules/",
+		"Class": "/src/Client/Modules/"
 	},
 	"Shared": {
-		"Module": "/src/Shared/"
+		"Module": "/src/Shared/",
+		"Class": "/src/Shared/"
 	}
 };
 
@@ -47,52 +70,7 @@ const AGF_DIR_STRUCTURE = {
 	}
 };
 
-const ROJO_FILE = JSON.stringify({
-	"name": "aerogameframework",
-	"servePort": 8000,
-	"partitions": {
-		"ClientControllers": {
-			"path": "src/Client/Controllers",
-			"target": "StarterPlayer.StarterPlayerScripts.Aero.Controllers"
-		},
-		"ClientModules": {
-			"path": "src/Client/Modules",
-			"target": "StarterPlayer.StarterPlayerScripts.Aero.Modules"
-		},
-		"ServerModules": {
-			"path": "src/Server/Modules",
-			"target": "ServerStorage.Aero.Modules"
-		},
-		"ServerServices": {
-			"path": "src/Server/Services",
-			"target": "ServerStorage.Aero.Services"
-		},
-		"Shared": {
-			"path": "src/Shared",
-			"target": "ReplicatedStorage.Aero.Shared"
-		},
-		"_ReplicatedFirst": {
-			"path": "src/_framework/rep_first",
-			"target": "ReplicatedFirst.Aero"
-		},
-		"_ReplicatedStorageInternal": {
-			"path": "src/_framework/rep_internal",
-			"target": "ReplicatedStorage.Aero.Internal"
-		},
-		"_ServerScriptService": {
-			"path": "src/_framework/server_internal",
-			"target": "ServerScriptService.Aero.Internal"
-		},
-		"_AeroClient": {
-			"path": "src/_framework/client_internal",
-			"target": "StarterPlayer.StarterPlayerScripts.Aero.Internal"
-		}
-	}
-}, null, 2);
-
-const AGF_FILE = JSON.stringify({
-	"agf": true
-}, null, 2);
+const AGF_FILE = JSON.stringify({"agf": true}, null, 2);
 
 const VSCODE_PROJECT_SETTINGS = JSON.stringify({
 	"files.exclude": {
@@ -109,17 +87,6 @@ const transformLuaIntoInit = async (filepath: string): Promise<string> => {
 	await fsutil.deleteFile(filepath);
 	return dirpath;
 };
-
-interface EnvTypeCustom {
-	isDir: boolean;
-	path: string;
-}
-
-interface EnvType {
-	environment?: string;
-	type: string;
-	custom?: EnvTypeCustom;
-}
 
 const getEnvType = async (filepath: string): Promise<EnvType|null> => {
 	const srcDir = path.join(vscode.workspace.workspaceFolders![0].uri.fsPath, "src");
@@ -183,6 +150,13 @@ const getEnvType = async (filepath: string): Promise<EnvType|null> => {
 				return null;
 			}
 		}
+		if (type === "Module") {
+			const moduleTypes = ["Normal Module", "Class Module"];
+			const moduleType = await vscode.window.showQuickPick(moduleTypes, {canPickMany: false});
+			if (moduleType === moduleTypes[1]) {
+				type = "Class";
+			}
+		}
 	}
 	return {
 		environment: environment,
@@ -214,14 +188,6 @@ const getSourceFileName = async (dirpath: string | null, selectionEnv: string, s
 	}
 };
 
-interface FileUri {
-	$mid: number;
-	fsPath: string;
-	external: string;
-	path: string;
-	scheme: string;
-}
-
 export function activate(context: vscode.ExtensionContext) {
 
 	let agfStatusBarItem: vscode.StatusBarItem;
@@ -247,13 +213,15 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 		};
 		const createAgf = fsutil.createFileIfNotExist(path.join(PROJECT_ROOT, ".agf"), AGF_FILE);
-		const creatingRojo = fsutil.createFileIfNotExist(path.join(PROJECT_ROOT, "rojo.json"), ROJO_FILE);
-		const createLuacheckRc = fsutil.createFileIfNotExist(path.join(PROJECT_ROOT, ".luacheckrc"), luacheckrc.source());
+		const creatingRojo4 = fsutil.createFileIfNotExist(path.join(PROJECT_ROOT, "rojo.json"), rojoTemplates.Rojo4);
+		const creatingRojo5 = fsutil.createFileIfNotExist(path.join(PROJECT_ROOT, "default.project.json"), rojoTemplates.Rojo5);
+		const createLuacheckRc = fsutil.createFileIfNotExist(path.join(PROJECT_ROOT, ".luacheckrc"), luacheckrc);
 		const creatingInternal = createInternal();
 		await filelist.loadFilelist();
 		const creatingDirStructure = createDirStructure(AGF_DIR_STRUCTURE, PROJECT_ROOT);
 		await createAgf;
-		await creatingRojo;
+		await creatingRojo4;
+		await creatingRojo5;
 		await createLuacheckRc;
 		await creatingInternal;
 		await creatingDirStructure;
@@ -288,7 +256,7 @@ export function activate(context: vscode.ExtensionContext) {
 				if (exists) {
 					vscode.window.showErrorMessage(`${fileName} already exists`);
 				} else {
-					await fsutil.createFileIfNotExist(filePath, templates.moduleTemplate(fileName));
+					await fsutil.createFileIfNotExist(filePath, luaTemplates.moduleTemplate(fileName));
 					vscode.window.showInformationMessage(`Created ${fileName}`);
 					const doc = await vscode.workspace.openTextDocument(filePath);
 					vscode.window.showTextDocument(doc);
@@ -303,7 +271,7 @@ export function activate(context: vscode.ExtensionContext) {
 				if (exists) {
 					vscode.window.showErrorMessage(`${fileName} already exists`);
 				} else {
-					await fsutil.createFile(filePath, templates.getTemplate(envType.environment!, envType.type, fileName));
+					await fsutil.createFile(filePath, luaTemplates.getTemplate(envType.environment!, envType.type, fileName));
 					vscode.window.showInformationMessage(`Created ${fileName}`);
 					const doc = await vscode.workspace.openTextDocument(filePath);
 					vscode.window.showTextDocument(doc);

@@ -6,14 +6,17 @@ import { workspace } from "vscode";
 const templateMapping: {[env: string]: {[type: string]: Function}} = {
 	"Server": {
 		"Service": serviceTemplate,
-		"Module": moduleTemplate
+		"Module": moduleTemplate,
+		"Class": classTemplate
 	},
 	"Client": {
 		"Controller": controllerTemplate,
-		"Module": moduleTemplate
+		"Module": moduleTemplate,
+		"Class": classTemplate
 	},
 	"Shared": {
-		"Module": moduleTemplate
+		"Module": moduleTemplate,
+		"Class": classTemplate
 	}
 };
 
@@ -75,6 +78,26 @@ return ${name}`;
 
 export function moduleTemplate(name: string) {
 	return `${header(name)}local ${name} = {}
+
+
+return ${name}`;
+}
+
+
+export function classTemplate(name: string) {
+	return `${header(name)}local ${name} = {}
+${name}.__index = ${name}
+
+
+function ${name}.new()
+
+	local self = setmetatable({
+
+	}, ${name})
+
+	return self
+
+end
 
 
 return ${name}`;

@@ -1,5 +1,4 @@
-export function source(): string {
-	return `-- luacheck-roblox <https://github.com/Quenty/luacheck-roblox>
+export default `-- luacheck-roblox <https://github.com/Quenty/luacheck-roblox>
 
 local empty = {}
 local read_write = { read_only = false }
@@ -707,4 +706,3 @@ files["**/*.spec.lua"] = {
 	std = "+testez",
 }
 `;
-}
