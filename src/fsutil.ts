@@ -24,11 +24,17 @@ export function doesFileExist(filepath: string): Promise<boolean> {
 	});
 }
 
+
+export function doesAnyFileExist(filepaths: string[]): Promise<boolean> {
+	const promises = filepaths.map((filepath) => doesFileExist(filepath));
+	return Promise.all(promises).then((results) => results.filter((result) => result === true).length > 0);
+}
+
+
 export function getFileType(filepath: string): Promise<FsFileType> {
 	return new Promise<FsFileType>((resolve, reject) => {
 		fs.stat(filepath, (err, stats) => {
 			if (err) {
-				console.error(err);
 				if (err.code === "ENOENT") {
 					resolve(FsFileType.None);
 				} else {

@@ -1,25 +1,23 @@
 import * as vscode from "vscode";
 import * as path from "path";
 import * as fsutil from "./fsutil";
-import { promises } from "dns";
 
 export class AGFNode extends vscode.TreeItem {
 
 	constructor(
 		public readonly label: string,
 		public readonly collapsibleState: vscode.TreeItemCollapsibleState,
-		public readonly path: string,
+		public readonly filepath: string,
 		public readonly fileType: fsutil.FsFileType
 	) {
 		super(label, collapsibleState);
-		console.log(label, collapsibleState, fileType);
 	}
 
 	get tooltip(): string {
 		return this.label;
 	}
 
-	iconPath = "resources/logo.svg";
+	iconPath = path.join(__filename, "..", "..", "resources", "logo.svg");
 	contextValue = "node";
 
 }
@@ -38,15 +36,32 @@ export class AGFTreeDataProvider implements vscode.TreeDataProvider<AGFNode> {
 	}
 
 	public getChildren(node?: AGFNode | undefined): Thenable<AGFNode[]> {
+		const collapsedState = vscode.TreeItemCollapsibleState.Collapsed;
+		const noneState = vscode.TreeItemCollapsibleState.None;
 		if (node) {
-			// TODO: Load sub-files:
-			console.log("No sub node of " + node.path);
-			return Promise.resolve([]);
+			return fsutil.readDir(node.filepath).then(async (filepaths) => {
+				const nodePromises: Promise<AGFNode>[] = [];
+				for (const filepath of filepaths) {
+					const name = path.basename(filepath);
+					if (name.startsWith("init.") && name.endsWith(".lua")) continue;
+					const fullPath = path.join(node.filepath, filepath);
+					const containsInit = await fsutil.doesAnyFileExist([
+						path.join(fullPath, "init.lua"),
+						path.join(fullPath, "init.server.lua"),
+						path.join(fullPath, "init.client.lua"),
+					]);
+
+					// TODO: Use 'containsInit' to properly display the directory name
+
+					nodePromises.push(
+						fsutil.getFileType(fullPath).then((fileType) =>
+							new AGFNode(name, fileType == fsutil.FsFileType.Directory ? collapsedState : noneState, fullPath, fileType))
+					);
+				}
+				return Promise.all(nodePromises);
+			});
 		} else {
 			const srcDir = path.join(this.basepath, "src");
-			console.log("Loading from " + srcDir);
-			const collapsedState = vscode.TreeItemCollapsibleState.Collapsed;
-			const noneState = vscode.TreeItemCollapsibleState.None;
 			return fsutil.readDir(srcDir).then((filepaths) => {
 				const nodePromises: Promise<AGFNode>[] = [];
 				for (const filepath of filepaths) {
@@ -55,7 +70,7 @@ export class AGFTreeDataProvider implements vscode.TreeDataProvider<AGFNode> {
 					if (name === "_framework") continue;
 					nodePromises.push(
 						fsutil.getFileType(fullPath).then((fileType) =>
-							new AGFNode(name, fileType == fsutil.FsFileType.Directory ? collapsedState : noneState, filepath, fileType))
+							new AGFNode(name, fileType == fsutil.FsFileType.Directory ? collapsedState : noneState, fullPath, fileType))
 					);
 				}
 				return Promise.all(nodePromises);
@@ -74,7 +89,6 @@ export class AGFExplorer {
 	private viewer: vscode.TreeView<AGFNode>;
 
 	constructor(basepath: string) {
-		console.log("Creating tree view");
 		this.viewer = vscode.window.createTreeView("agf-explorer-view", {
 			treeDataProvider: new AGFTreeDataProvider(basepath)
 		});
