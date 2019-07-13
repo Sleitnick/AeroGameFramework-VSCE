@@ -7,7 +7,7 @@ import * as fsutil from "./fsutil";
 import * as luaTemplates from "./luaTemplates";
 import * as rojoTemplates from "./rojoTemplates";
 import luacheckrc from "./luacheckrc";
-import { AGFExplorer } from "./agfExplorer";
+import { AGFExplorer, AGFNode } from "./agfExplorer";
 
 interface EnvTypeCustom {
 	isDir: boolean;
@@ -193,6 +193,10 @@ export function activate(context: vscode.ExtensionContext) {
 
 	let agfStatusBarItem: vscode.StatusBarItem;
 
+	const agfExplorer = new AGFExplorer(vscode.workspace.workspaceFolders![0].uri.fsPath);
+
+	vscode.commands.executeCommand("setContext", "isAgfProject", true);
+
 	const agf = vscode.commands.registerCommand("extension.agfinit", async () => {
 		const PROJECT_ROOT = vscode.workspace.workspaceFolders![0].uri.fsPath;
 		const createInternal = async () => {
@@ -260,7 +264,8 @@ export function activate(context: vscode.ExtensionContext) {
 					await fsutil.createFileIfNotExist(filePath, luaTemplates.moduleTemplate(fileName));
 					vscode.window.showInformationMessage(`Created ${fileName}`);
 					const doc = await vscode.workspace.openTextDocument(filePath);
-					vscode.window.showTextDocument(doc);
+					vscode.window.showTextDocument(doc, {preserveFocus: true});
+					agfExplorer.refresh();
 				}
 			}
 		} else {
@@ -275,17 +280,26 @@ export function activate(context: vscode.ExtensionContext) {
 					await fsutil.createFile(filePath, luaTemplates.getTemplate(envType.environment!, envType.type, fileName));
 					vscode.window.showInformationMessage(`Created ${fileName}`);
 					const doc = await vscode.workspace.openTextDocument(filePath);
-					vscode.window.showTextDocument(doc);
+					vscode.window.showTextDocument(doc, {preserveFocus: true});
+					agfExplorer.refresh();
 				}
 			}
 		}
 	});
 
+	const agfDeleteMenu = vscode.commands.registerCommand("extension.agfdelete", async (node: AGFNode) => {
+		if (!node) return;
+		fsutil.deleteFile(node.filepath).then(() => agfExplorer.refresh());
+	});
+
+	const agfRefresh = vscode.commands.registerCommand("extension.agfrefresh", async () => {
+		agfExplorer.refresh();
+	});
+
 	agfStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
 	agfStatusBarItem.command = "extension.agfcontext";
 	agfStatusBarItem.text = "$(code) AGF";
-	context.subscriptions.push(agf, agfContextMenu, agfStatusBarItem);
-	new AGFExplorer(vscode.workspace.workspaceFolders![0].uri.fsPath);
+	context.subscriptions.push(agf, agfContextMenu, agfDeleteMenu, agfStatusBarItem, agfRefresh);
 	agfStatusBarItem.show();
 	
 }

@@ -41,13 +41,30 @@
 			{
 				"command": "extension.agfcontext",
 				"title": "AeroGameFramework: Create"
+			},
+			{
+				"command": "extension.agfdelete",
+				"title": "AeroGameFramework: Delete"
+			}
+		],
+		"keybindings": [
+			{
+				"command": "extension.agfdelete",
+				"key": "delete",
+				"when": "agfHasFileSelection"
 			}
 		],
 		"menus": {
-			"explorer/context": [
+			"view/item/context": [
 				{
 					"command": "extension.agfcontext",
-					"group": "2_workspace"
+					"group": "2_workspace",
+					"when": "view == agfexplorerview"
+				},
+				{
+					"command": "extension.agfdelete",
+					"group": "7_modification",
+					"when": "view == agfexplorerview"
 				}
 			]
 		},
@@ -65,17 +82,18 @@
 		"viewsContainers": {
 			"activitybar": [
 				{
-					"id": "agf-explorer",
+					"id": "agfexplorer",
 					"title": "AGF Explorer",
 					"icon": "resources/logo.svg"
 				}
 			]
 		},
 		"views": {
-			"agf-explorer": [
+			"agfexplorer": [
 				{
-					"id": "agf-explorer-view",
-					"name": "Source Files"
+					"id": "agfexplorerview",
+					"name": "Source Files",
+					"when": "isAgfProject"
 				}
 			]
 		}

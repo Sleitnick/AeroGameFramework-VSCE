@@ -125,19 +125,24 @@ export class AGFTreeDataProvider implements vscode.TreeDataProvider<AGFNode> {
 export class AGFExplorer {
 
 	private viewer: vscode.TreeView<AGFNode>;
+	private dataProvider: AGFTreeDataProvider;
 
 	constructor(basepath: string) {
-		this.viewer = vscode.window.createTreeView("agf-explorer-view", {
-			treeDataProvider: new AGFTreeDataProvider(basepath)
-		});
+		this.dataProvider = new AGFTreeDataProvider(basepath);
+		this.viewer = vscode.window.createTreeView("agfexplorerview", {treeDataProvider: this.dataProvider});
 		this.viewer.onDidChangeSelection((event: vscode.TreeViewSelectionChangeEvent<AGFNode>) => {
 			const selection = event.selection[0];
-			if (selection && selection.fileType == fsutil.FsFileType.File) {
-				vscode.workspace.openTextDocument(selection.filepath).then((doc) => {
-					vscode.window.showTextDocument(doc);
+			if (selection && (selection.fileType == fsutil.FsFileType.File || selection.initFile)) {
+				vscode.workspace.openTextDocument(selection.initFile || selection.filepath).then((doc) => {
+					vscode.window.showTextDocument(doc, {preserveFocus: true});
 				});
 			}
+			//vscode.commands.executeCommand("setContext", "agfHasFileSelection", selection && selection.label.endsWith(".lua") ? true : false);
 		});
+	}
+
+	public refresh() {
+		this.dataProvider.refresh();
 	}
 
 }
