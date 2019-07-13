@@ -233,13 +233,13 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.window.showInformationMessage("AeroGameFramework initialized");
 	});
 
-	const agfContextMenu = vscode.commands.registerCommand("extension.agfcontext", async (fileUri: FileUri) => {
+	const agfContextMenu = vscode.commands.registerCommand("extension.agfcontext", async (node: AGFNode) => {
 		const PROJECT_ROOT = vscode.workspace.workspaceFolders![0].uri.fsPath;
-		if (fileUri && path.basename(fileUri.fsPath) === "init.lua") {
+		if (node && path.basename(node.filepath) === "init.lua") {
 			vscode.window.showWarningMessage("Cannot created nested module in init file");
 			return;
 		}
-		const envType = await getEnvType(fileUri ? fileUri.fsPath : PROJECT_ROOT);
+		const envType = await getEnvType(node ? node.filepath : PROJECT_ROOT);
 		if (!envType) {
 			return;
 		}
@@ -254,7 +254,7 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 			if (fileName) {
 				if (!envType.custom.isDir) {
-					dirpath = await transformLuaIntoInit(fileUri.fsPath);
+					dirpath = await transformLuaIntoInit(node.filepath);
 				}
 				const filePath = path.join(dirpath!, `${fileName}.lua`);
 				const exists = await fsutil.doesFileExist(filePath);

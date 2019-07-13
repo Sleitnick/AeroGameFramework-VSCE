@@ -137,7 +137,6 @@ export class AGFExplorer {
 					vscode.window.showTextDocument(doc, {preserveFocus: true});
 				});
 			}
-			//vscode.commands.executeCommand("setContext", "agfHasFileSelection", selection && selection.label.endsWith(".lua") ? true : false);
 		});
 	}
 
