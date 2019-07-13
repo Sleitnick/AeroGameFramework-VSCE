@@ -40,7 +40,8 @@
 			},
 			{
 				"command": "extension.agfcontext",
-				"title": "AeroGameFramework: Create"
+				"title": "AeroGameFramework: Create",
+				"icon": "resources/script_add.png"
 			},
 			{
 				"command": "extension.agfdelete",
@@ -55,6 +56,13 @@
 			}
 		],
 		"menus": {
+			"view/title": [
+				{
+					"command": "extension.agfcontext",
+					"group": "navigation",
+					"when": "view == agfexplorerview"
+				}
+			],
 			"view/item/context": [
 				{
 					"command": "extension.agfcontext",

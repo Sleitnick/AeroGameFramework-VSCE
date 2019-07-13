@@ -190,12 +190,11 @@ const getSourceFileName = async (dirpath: string | null, selectionEnv: string, s
 };
 
 export function activate(context: vscode.ExtensionContext) {
+	
+	vscode.commands.executeCommand("setContext", "isAgfProject", true);
 
 	let agfStatusBarItem: vscode.StatusBarItem;
-
 	const agfExplorer = new AGFExplorer(vscode.workspace.workspaceFolders![0].uri.fsPath);
-
-	vscode.commands.executeCommand("setContext", "isAgfProject", true);
 
 	const agf = vscode.commands.registerCommand("extension.agfinit", async () => {
 		const PROJECT_ROOT = vscode.workspace.workspaceFolders![0].uri.fsPath;
