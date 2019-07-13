@@ -7,6 +7,7 @@ import * as fsutil from "./fsutil";
 import * as luaTemplates from "./luaTemplates";
 import * as rojoTemplates from "./rojoTemplates";
 import luacheckrc from "./luacheckrc";
+import { AGFExplorer } from "./agfExplorer";
 
 interface EnvTypeCustom {
 	isDir: boolean;
@@ -284,6 +285,7 @@ export function activate(context: vscode.ExtensionContext) {
 	agfStatusBarItem.command = "extension.agfcontext";
 	agfStatusBarItem.text = "$(code) AGF";
 	context.subscriptions.push(agf, agfContextMenu, agfStatusBarItem);
+	new AGFExplorer(vscode.workspace.workspaceFolders![0].uri.fsPath);
 	agfStatusBarItem.show();
 	
 }

@@ -61,6 +61,23 @@
 					"description": "Username appended to new source files"
 				}
 			}
+		},
+		"viewsContainers": {
+			"activitybar": [
+				{
+					"id": "agf-explorer",
+					"title": "AGF Explorer",
+					"icon": "resources/logo.svg"
+				}
+			]
+		},
+		"views": {
+			"agf-explorer": [
+				{
+					"id": "agf-explorer-view",
+					"name": "Source Files"
+				}
+			]
 		}
 	},
 	"scripts": {

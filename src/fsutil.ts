@@ -28,6 +28,7 @@ export function getFileType(filepath: string): Promise<FsFileType> {
 	return new Promise<FsFileType>((resolve, reject) => {
 		fs.stat(filepath, (err, stats) => {
 			if (err) {
+				console.error(err);
 				if (err.code === "ENOENT") {
 					resolve(FsFileType.None);
 				} else {
@@ -101,6 +102,18 @@ export function deleteFile(filepath: string) {
 				reject(err);
 			} else {
 				resolve();
+			}
+		});
+	});
+}
+
+export function readDir(filepath: string) {
+	return new Promise<string[]>((resolve, reject) => {
+		fs.readdir(filepath, (err, files) => {
+			if (err) {
+				reject(err);
+			} else {
+				resolve(files);
 			}
 		});
 	});
