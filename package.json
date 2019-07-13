@@ -1,7 +1,7 @@
 {
 	"name": "aerogameframework",
 	"displayName": "AeroGameFramework",
-	"version": "0.0.12",
+	"version": "0.0.13",
 	"description": "VSC extension for AeroGameFramework",
 	"author": {
 		"name": "Stephen Leitnick"
@@ -40,14 +40,39 @@
 			},
 			{
 				"command": "extension.agfcontext",
-				"title": "AeroGameFramework: Create"
+				"title": "AeroGameFramework: Create",
+				"icon": "resources/script_add.png"
+			},
+			{
+				"command": "extension.agfdelete",
+				"title": "AeroGameFramework: Delete"
+			}
+		],
+		"keybindings": [
+			{
+				"command": "extension.agfdelete",
+				"key": "delete",
+				"when": "agfHasFileSelection"
 			}
 		],
 		"menus": {
-			"explorer/context": [
+			"view/title": [
 				{
 					"command": "extension.agfcontext",
-					"group": "2_workspace"
+					"group": "navigation",
+					"when": "view == agfexplorerview"
+				}
+			],
+			"view/item/context": [
+				{
+					"command": "extension.agfcontext",
+					"group": "2_workspace",
+					"when": "view == agfexplorerview"
+				},
+				{
+					"command": "extension.agfdelete",
+					"group": "7_modification",
+					"when": "view == agfexplorerview"
 				}
 			]
 		},
@@ -61,6 +86,24 @@
 					"description": "Username appended to new source files"
 				}
 			}
+		},
+		"viewsContainers": {
+			"activitybar": [
+				{
+					"id": "agfexplorer",
+					"title": "AGF Explorer",
+					"icon": "resources/logo.svg"
+				}
+			]
+		},
+		"views": {
+			"agfexplorer": [
+				{
+					"id": "agfexplorerview",
+					"name": "Source Files",
+					"when": "isAgfProject"
+				}
+			]
 		}
 	},
 	"scripts": {

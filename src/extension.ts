@@ -7,6 +7,7 @@ import * as fsutil from "./fsutil";
 import * as luaTemplates from "./luaTemplates";
 import * as rojoTemplates from "./rojoTemplates";
 import luacheckrc from "./luacheckrc";
+import { AGFExplorer, AGFNode } from "./agfExplorer";
 
 interface EnvTypeCustom {
 	isDir: boolean;
@@ -189,8 +190,11 @@ const getSourceFileName = async (dirpath: string | null, selectionEnv: string, s
 };
 
 export function activate(context: vscode.ExtensionContext) {
+	
+	vscode.commands.executeCommand("setContext", "isAgfProject", true);
 
 	let agfStatusBarItem: vscode.StatusBarItem;
+	const agfExplorer = new AGFExplorer(vscode.workspace.workspaceFolders![0].uri.fsPath);
 
 	const agf = vscode.commands.registerCommand("extension.agfinit", async () => {
 		const PROJECT_ROOT = vscode.workspace.workspaceFolders![0].uri.fsPath;
@@ -228,13 +232,13 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.window.showInformationMessage("AeroGameFramework initialized");
 	});
 
-	const agfContextMenu = vscode.commands.registerCommand("extension.agfcontext", async (fileUri: FileUri) => {
+	const agfContextMenu = vscode.commands.registerCommand("extension.agfcontext", async (node: AGFNode) => {
 		const PROJECT_ROOT = vscode.workspace.workspaceFolders![0].uri.fsPath;
-		if (fileUri && path.basename(fileUri.fsPath) === "init.lua") {
+		if (node && path.basename(node.filepath) === "init.lua") {
 			vscode.window.showWarningMessage("Cannot created nested module in init file");
 			return;
 		}
-		const envType = await getEnvType(fileUri ? fileUri.fsPath : PROJECT_ROOT);
+		const envType = await getEnvType(node ? node.filepath : PROJECT_ROOT);
 		if (!envType) {
 			return;
 		}
@@ -249,7 +253,7 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 			if (fileName) {
 				if (!envType.custom.isDir) {
-					dirpath = await transformLuaIntoInit(fileUri.fsPath);
+					dirpath = await transformLuaIntoInit(node.filepath);
 				}
 				const filePath = path.join(dirpath!, `${fileName}.lua`);
 				const exists = await fsutil.doesFileExist(filePath);
@@ -259,7 +263,8 @@ export function activate(context: vscode.ExtensionContext) {
 					await fsutil.createFileIfNotExist(filePath, luaTemplates.moduleTemplate(fileName));
 					vscode.window.showInformationMessage(`Created ${fileName}`);
 					const doc = await vscode.workspace.openTextDocument(filePath);
-					vscode.window.showTextDocument(doc);
+					vscode.window.showTextDocument(doc, {preserveFocus: true});
+					agfExplorer.refresh();
 				}
 			}
 		} else {
@@ -274,16 +279,26 @@ export function activate(context: vscode.ExtensionContext) {
 					await fsutil.createFile(filePath, luaTemplates.getTemplate(envType.environment!, envType.type, fileName));
 					vscode.window.showInformationMessage(`Created ${fileName}`);
 					const doc = await vscode.workspace.openTextDocument(filePath);
-					vscode.window.showTextDocument(doc);
+					vscode.window.showTextDocument(doc, {preserveFocus: true});
+					agfExplorer.refresh();
 				}
 			}
 		}
 	});
 
+	const agfDeleteMenu = vscode.commands.registerCommand("extension.agfdelete", async (node: AGFNode) => {
+		if (!node) return;
+		fsutil.deleteFile(node.filepath).then(() => agfExplorer.refresh());
+	});
+
+	const agfRefresh = vscode.commands.registerCommand("extension.agfrefresh", async () => {
+		agfExplorer.refresh();
+	});
+
 	agfStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
 	agfStatusBarItem.command = "extension.agfcontext";
 	agfStatusBarItem.text = "$(code) AGF";
-	context.subscriptions.push(agf, agfContextMenu, agfStatusBarItem);
+	context.subscriptions.push(agf, agfContextMenu, agfDeleteMenu, agfStatusBarItem, agfRefresh);
 	agfStatusBarItem.show();
 	
 }

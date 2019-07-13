@@ -1,5 +1,9 @@
 # Changelog
 
+## Alpha 0.0.13
+
+- Added treeview for framework source files
+
 ## Alpha 0.0.12
 
 - Support for Rojo 0.5.x

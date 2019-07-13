@@ -24,6 +24,13 @@ export function doesFileExist(filepath: string): Promise<boolean> {
 	});
 }
 
+
+export function doesAnyFileExist(filepaths: string[]): Promise<boolean> {
+	const promises = filepaths.map((filepath) => doesFileExist(filepath));
+	return Promise.all(promises).then((results) => results.filter((result) => result === true).length > 0);
+}
+
+
 export function getFileType(filepath: string): Promise<FsFileType> {
 	return new Promise<FsFileType>((resolve, reject) => {
 		fs.stat(filepath, (err, stats) => {
@@ -101,6 +108,18 @@ export function deleteFile(filepath: string) {
 				reject(err);
 			} else {
 				resolve();
+			}
+		});
+	});
+}
+
+export function readDir(filepath: string) {
+	return new Promise<string[]>((resolve, reject) => {
+		fs.readdir(filepath, (err, files) => {
+			if (err) {
+				reject(err);
+			} else {
+				resolve(files);
 			}
 		});
 	});
