@@ -82,7 +82,8 @@ export class AGFTreeDataProvider implements vscode.TreeDataProvider<AGFNode> {
 					let name = path.basename(filepath);
 					if (name.startsWith("init.") && name.endsWith(".lua")) continue;
 					const fullPath = path.join(node.filepath, filepath);
-					const initFile = await this.getInitFile(fullPath);
+					const isDir = ((await fsutil.getFileType(fullPath)) === fsutil.FsFileType.Directory);
+					const initFile = (isDir ? await this.getInitFile(fullPath) : undefined);
 					if (initFile) {
 						name += ".lua";
 					}

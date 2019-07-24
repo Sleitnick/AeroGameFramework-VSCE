@@ -10,7 +10,7 @@ module.exports = {
 		"plugin:@typescript-eslint/recommended"
 	],
 	"parserOptions": {
-		"project": "./site/tsconfig.json",
+		"project": "./tsconfig.json",
 		"ecmaFeatures": {
 			"jsx": true
 		}
