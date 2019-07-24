@@ -10,12 +10,13 @@ module.exports = {
 		"plugin:@typescript-eslint/recommended"
 	],
 	"parserOptions": {
-		"project": "./site/tsconfig.json",
+		"project": "./tsconfig.json",
 		"ecmaFeatures": {
 			"jsx": true
 		}
 	},
 	"rules": {
-		"@typescript-eslint/indent": "off"
+		"@typescript-eslint/indent": "off",
+		"@typescript-eslint/no-parameter-properties": "off"
 	}
 };

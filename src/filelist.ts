@@ -21,23 +21,23 @@ interface FilelistItem {
 
 let filelist: Filelist;
 
-export function getChildren(githubPath: string, localPath: string) {
+export function getChildren(githubPath: string, localPath: string): void {
 	const paths = filelist.paths;
-	const scanLoadChildren = (item: FilelistItem) => {
-		const scanChildren = (parent: FilelistItem, relPath: string) => {
+	const scanLoadChildren = (item: FilelistItem): void => {
+		const scanChildren = (parent: FilelistItem, relPath: string): void => {
 			if (parent.children) {
 				for (const child of parent.children) {
 					const _relPath = `${relPath}${child.name}${child.type === "directory" ? "/" : ""}`;
 					if (child.type === "directory") {
-						fsutil.createDirIfNotExist(path.join(localPath, _relPath)).then(() => {
+						fsutil.createDirIfNotExist(path.join(localPath, _relPath)).then((): void => {
 							scanChildren(child, _relPath);
 						});
 					} else {
 						// Create source file:
 						const sourceUrl = `${URL_BASE}/${githubPath}/${_relPath}`;
-						fetch(sourceUrl).then(res => res.text()).then(source => {
+						fetch(sourceUrl).then((res): Promise<string> => res.text()).then((source): void => {
 							const p = path.join(localPath, _relPath);
-							fs.writeFile(p, source, {encoding: "utf8"}, err => {
+							fs.writeFile(p, source, {encoding: "utf8"}, (err): void => {
 								if (err) {
 									console.error(err);
 								}
@@ -49,7 +49,7 @@ export function getChildren(githubPath: string, localPath: string) {
 		};
 		scanChildren(item, "");
 	};
-	const scan = (item: FilelistItem, curpath: string) => {
+	const scan = (item: FilelistItem, curpath: string): void => {
 		if (item.type === "directory") {
 			curpath = `${curpath}${item.name}/`;
 			if (curpath === githubPath) {
@@ -67,8 +67,8 @@ export function getChildren(githubPath: string, localPath: string) {
 	scan(paths, "");
 }
 
-export function loadFilelist() {
-	return fetch(URL_FILELIST).then(res => res.json()).then(json => {
+export function loadFilelist(): object {
+	return fetch(URL_FILELIST).then((res): Promise<Filelist> => res.json()).then((json: Filelist): void => {
 		filelist = json;
 		exports.filelist = filelist;
 	});

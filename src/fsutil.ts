@@ -9,8 +9,8 @@ export enum FsFileType {
 }
 
 export function doesFileExist(filepath: string): Promise<boolean> {
-	return new Promise<boolean>((resolve, reject) => {
-		fs.stat(filepath, err => {
+	return new Promise<boolean>((resolve, reject): void => {
+		fs.stat(filepath, (err): void => {
 			if (err) {
 				if (err.code === "ENOENT") {
 					resolve(false);
@@ -26,14 +26,14 @@ export function doesFileExist(filepath: string): Promise<boolean> {
 
 
 export function doesAnyFileExist(filepaths: string[]): Promise<boolean> {
-	const promises = filepaths.map((filepath) => doesFileExist(filepath));
-	return Promise.all(promises).then((results) => results.filter((result) => result === true).length > 0);
+	const promises = filepaths.map((filepath): Promise<boolean> => doesFileExist(filepath));
+	return Promise.all(promises).then((results): boolean => results.filter((result): boolean => result === true).length > 0);
 }
 
 
 export function getFileType(filepath: string): Promise<FsFileType> {
-	return new Promise<FsFileType>((resolve, reject) => {
-		fs.stat(filepath, (err, stats) => {
+	return new Promise<FsFileType>((resolve, reject): void => {
+		fs.stat(filepath, (err, stats): void => {
 			if (err) {
 				if (err.code === "ENOENT") {
 					resolve(FsFileType.None);
@@ -51,9 +51,9 @@ export function getFileType(filepath: string): Promise<FsFileType> {
 	});
 }
 
-export function createFile(filepath: string, data: string) {
-	return new Promise<void>((resolve, reject) => {
-		fs.writeFile(filepath, data, {encoding: "utf8"}, err => {
+export function createFile(filepath: string, data: string): Promise<void> {
+	return new Promise<void>((resolve, reject): void => {
+		fs.writeFile(filepath, data, {encoding: "utf8"}, (err): void => {
 			if (err) {
 				reject(err);
 			} else {
@@ -63,19 +63,20 @@ export function createFile(filepath: string, data: string) {
 	});
 }
 
-export function createFileIfNotExist(filepath: string, data: string) {
-	return doesFileExist(filepath).then(exists => {
+export function createFileIfNotExist(filepath: string, data: string): Promise<void> {
+	return doesFileExist(filepath).then((exists): Promise<void> => {
 		if (!exists) {
 			return createFile(filepath, data);
 		}
+		return Promise.resolve();
 	});
 }
 
-export function createDirIfNotExist(dirpath: string) {
-	return doesFileExist(dirpath).then(exists => {
+export function createDirIfNotExist(dirpath: string): Promise<boolean> {
+	return doesFileExist(dirpath).then((exists): Promise<boolean> => {
 		if (!exists) {
-			return new Promise<boolean>((resolve, reject) => {
-				fs.mkdir(dirpath, err => {
+			return new Promise<boolean>((resolve, reject): void => {
+				fs.mkdir(dirpath, (err): void => {
 					if (err) {
 						reject(err);
 					} else {
@@ -84,14 +85,14 @@ export function createDirIfNotExist(dirpath: string) {
 				});
 			});
 		} else {
-			return false;
+			return Promise.resolve(false);
 		}
 	});
 }
 
-export function copyFile(srcfile: string, dstfile: string) {
-	return new Promise<void>((resolve, reject) => {
-		fs.copyFile(srcfile, dstfile, (err) => {
+export function copyFile(srcfile: string, dstfile: string): Promise<void> {
+	return new Promise<void>((resolve, reject): void => {
+		fs.copyFile(srcfile, dstfile, (err): void => {
 			if (err) {
 				reject(err);
 			} else {
@@ -101,9 +102,9 @@ export function copyFile(srcfile: string, dstfile: string) {
 	});
 }
 
-export function deleteFile(filepath: string) {
-	return new Promise<void>((resolve, reject) => {
-		fs.unlink(filepath, (err) => {
+export function deleteFile(filepath: string): Promise<void> {
+	return new Promise<void>((resolve, reject): void => {
+		fs.unlink(filepath, (err): void => {
 			if (err) {
 				reject(err);
 			} else {
@@ -113,9 +114,9 @@ export function deleteFile(filepath: string) {
 	});
 }
 
-export function readDir(filepath: string) {
-	return new Promise<string[]>((resolve, reject) => {
-		fs.readdir(filepath, (err, files) => {
+export function readDir(filepath: string): Promise<string[]> {
+	return new Promise<string[]>((resolve, reject): void => {
+		fs.readdir(filepath, (err, files): void => {
 			if (err) {
 				reject(err);
 			} else {

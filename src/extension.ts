@@ -82,15 +82,18 @@ const VSCODE_PROJECT_SETTINGS = JSON.stringify({
 
 const transformLuaIntoInit = async (filepath: string): Promise<string> => {
 	const dirpath = filepath.substring(0, filepath.lastIndexOf("."));
-	const ext = filepath.match(/(\.[0-9a-z]+)?\.[0-9a-z]+$/i)![0];
+	const extMatch = filepath.match(/(\.[0-9a-z]+)?\.[0-9a-z]+$/i);
+	const ext = (extMatch ? extMatch[0] : "");
 	await fsutil.createDirIfNotExist(dirpath);
 	await fsutil.copyFile(filepath, path.join(dirpath, "/init" + ext));
 	await fsutil.deleteFile(filepath);
 	return dirpath;
 };
 
-const getEnvType = async (filepath: string): Promise<EnvType|null> => {
-	const srcDir = path.join(vscode.workspace.workspaceFolders![0].uri.fsPath, "src");
+const getEnvType = async (filepath: string): Promise<EnvType | null> => {
+	const workspaceFolders = vscode.workspace.workspaceFolders;
+	if (!workspaceFolders) return Promise.reject(null);
+	const srcDir = path.join(workspaceFolders[0].uri.fsPath, "src");
 	let environment = null;
 	let type = null;
 	if (path.join(srcDir, "Client") === filepath) {
@@ -165,14 +168,15 @@ const getEnvType = async (filepath: string): Promise<EnvType|null> => {
 	};
 };
 
-const getSourceFileName = async (dirpath: string | null, selectionEnv: string, selectionType: string, checkIfExists: boolean): Promise<string|undefined> => {
+const getSourceFileName = async (dirpath: string | null, selectionEnv: string, selectionType: string, checkIfExists: boolean): Promise<string | undefined> => {
 	const valuePrefix = "Name";
+	const dirpathNonNull = (dirpath || "");
 	const fileName = await vscode.window.showInputBox({
 		placeHolder: ("My" + selectionType),
 		prompt: ("Create new " + selectionEnv + " " + selectionType),
 		value: (valuePrefix + selectionType),
 		valueSelection: [0, valuePrefix.length],
-		validateInput: async (value: string) => {
+		validateInput: async (value: string): Promise<string | null> => {
 			value = value.trim();
 			if (value.match(/^\d/g)) {
 				return "Name cannot begin with a number";
@@ -181,7 +185,7 @@ const getSourceFileName = async (dirpath: string | null, selectionEnv: string, s
 			} else if (value.toLowerCase() === "init") {
 				return "Name cannot be \"init\"";
 			}
-			return (checkIfExists && await fsutil.doesFileExist(path.join(dirpath!, `${value}.lua`))) ? `${value} already exists` : null;
+			return (checkIfExists && await fsutil.doesFileExist(path.join(dirpathNonNull, `${value}.lua`))) ? `${value} already exists` : null;
 		}
 	});
 	if (fileName) {
@@ -189,20 +193,24 @@ const getSourceFileName = async (dirpath: string | null, selectionEnv: string, s
 	}
 };
 
-export function activate(context: vscode.ExtensionContext) {
+export function activate(context: vscode.ExtensionContext): void {
 	
 	vscode.commands.executeCommand("setContext", "isAgfProject", true);
 
 	let agfStatusBarItem: vscode.StatusBarItem;
-	const agfExplorer = new AGFExplorer(vscode.workspace.workspaceFolders![0].uri.fsPath);
 
-	const agf = vscode.commands.registerCommand("extension.agfinit", async () => {
-		const PROJECT_ROOT = vscode.workspace.workspaceFolders![0].uri.fsPath;
-		const createInternal = async () => {
+	const workspaceFolders = vscode.workspace.workspaceFolders;
+	if (!workspaceFolders) return;
+	const agfExplorer = new AGFExplorer(workspaceFolders[0].uri.fsPath);
+
+	const agf = vscode.commands.registerCommand("extension.agfinit", async (): Promise<void> => {
+		const PROJECT_ROOT = workspaceFolders[0].uri.fsPath;
+		const createInternal = async (): Promise<void> => {
 			await fsutil.createDirIfNotExist(path.join(PROJECT_ROOT, ".vscode"));
 			await fsutil.createFileIfNotExist(path.join(PROJECT_ROOT, ".vscode", "settings.json"), VSCODE_PROJECT_SETTINGS);
 		};
-		const createDirStructure = async (parent: {[k: string]: any}, curpath: string) => {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const createDirStructure = async (parent: {[k: string]: any}, curpath: string): Promise<void> => {
 			for (const k in parent) {
 				if (parent.hasOwnProperty(k)) {
 					const v = parent[k];
@@ -232,8 +240,8 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.window.showInformationMessage("AeroGameFramework initialized");
 	});
 
-	const agfContextMenu = vscode.commands.registerCommand("extension.agfcontext", async (node: AGFNode) => {
-		const PROJECT_ROOT = vscode.workspace.workspaceFolders![0].uri.fsPath;
+	const agfContextMenu = vscode.commands.registerCommand("extension.agfcontext", async (node: AGFNode): Promise<void> => {
+		const PROJECT_ROOT = workspaceFolders[0].uri.fsPath;
 		if (node && path.basename(node.filepath) === "init.lua") {
 			vscode.window.showWarningMessage("Cannot created nested module in init file");
 			return;
@@ -254,8 +262,10 @@ export function activate(context: vscode.ExtensionContext) {
 			if (fileName) {
 				if (!envType.custom.isDir) {
 					dirpath = await transformLuaIntoInit(node.filepath);
+				} else {
+					dirpath = "";
 				}
-				const filePath = path.join(dirpath!, `${fileName}.lua`);
+				const filePath = path.join(dirpath, `${fileName}.lua`);
 				const exists = await fsutil.doesFileExist(filePath);
 				if (exists) {
 					vscode.window.showErrorMessage(`${fileName} already exists`);
@@ -268,15 +278,16 @@ export function activate(context: vscode.ExtensionContext) {
 				}
 			}
 		} else {
-			const dirpath = path.join(PROJECT_ROOT, QUICK_PICK_FILEPATHS[envType.environment!][envType.type]);
-			const fileName = await getSourceFileName(dirpath, envType.environment!, envType.type, true);
+			const env = envType.environment || "";
+			const dirpath = path.join(PROJECT_ROOT, QUICK_PICK_FILEPATHS[env][envType.type]);
+			const fileName = await getSourceFileName(dirpath, env, envType.type, true);
 			if (fileName) {
 				const filePath = path.join(dirpath, `${fileName}.lua`);
 				const exists = await fsutil.doesFileExist(filePath);
 				if (exists) {
 					vscode.window.showErrorMessage(`${fileName} already exists`);
 				} else {
-					await fsutil.createFile(filePath, luaTemplates.getTemplate(envType.environment!, envType.type, fileName));
+					await fsutil.createFile(filePath, luaTemplates.getTemplate(env, envType.type, fileName));
 					vscode.window.showInformationMessage(`Created ${fileName}`);
 					const doc = await vscode.workspace.openTextDocument(filePath);
 					vscode.window.showTextDocument(doc, {preserveFocus: true});
@@ -286,12 +297,12 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	});
 
-	const agfDeleteMenu = vscode.commands.registerCommand("extension.agfdelete", async (node: AGFNode) => {
+	const agfDeleteMenu = vscode.commands.registerCommand("extension.agfdelete", async (node: AGFNode): Promise<void> => {
 		if (!node) return;
-		fsutil.deleteFile(node.filepath).then(() => agfExplorer.refresh());
+		fsutil.deleteFile(node.filepath).then((): void => agfExplorer.refresh());
 	});
 
-	const agfRefresh = vscode.commands.registerCommand("extension.agfrefresh", async () => {
+	const agfRefresh = vscode.commands.registerCommand("extension.agfrefresh", async (): Promise<void> => {
 		agfExplorer.refresh();
 	});
 
@@ -303,6 +314,6 @@ export function activate(context: vscode.ExtensionContext) {
 	
 }
 
-export function deactivate() {
+export function deactivate(): void {
 
 }
