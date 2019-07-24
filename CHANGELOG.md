@@ -1,5 +1,10 @@
 # Changelog
 
+## Alpha 0.0.14
+
+- Fixed a bug preventing the treeview from working on MacOS
+- Refactored code according to linter
+
 ## Alpha 0.0.13
 
 - Added treeview for framework source files
