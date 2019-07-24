@@ -16,6 +16,7 @@ module.exports = {
 		}
 	},
 	"rules": {
-		"@typescript-eslint/indent": "off"
+		"@typescript-eslint/indent": "off",
+		"@typescript-eslint/no-parameter-properties": "off"
 	}
 };
