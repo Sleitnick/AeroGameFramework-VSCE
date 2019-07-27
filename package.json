@@ -1,7 +1,7 @@
 {
 	"name": "aerogameframework",
 	"displayName": "AeroGameFramework",
-	"version": "0.0.14",
+	"version": "0.0.15",
 	"description": "VSC extension for AeroGameFramework",
 	"author": {
 		"name": "Stephen Leitnick"
@@ -39,13 +39,23 @@
 				"title": "AeroGameFramework: Initialize"
 			},
 			{
-				"command": "extension.agfcontext",
+				"command": "extension.agfcreatefolder",
+				"title": "AeroGameFramework: Create Folder",
+				"icon": "resources/folder_add.png"
+			},
+			{
+				"command": "extension.agfcreate",
 				"title": "AeroGameFramework: Create",
 				"icon": "resources/script_add.png"
 			},
 			{
 				"command": "extension.agfdelete",
 				"title": "AeroGameFramework: Delete"
+			},
+			{
+				"command": "extension.agfrefresh",
+				"title": "AeroGameFramework: Refresh",
+				"icon": "resources/arrow_refresh.png"
 			}
 		],
 		"keybindings": [
@@ -58,14 +68,24 @@
 		"menus": {
 			"view/title": [
 				{
-					"command": "extension.agfcontext",
+					"command": "extension.agfcreate",
 					"group": "navigation",
 					"when": "view == agfexplorerview"
 				}
 			],
 			"view/item/context": [
 				{
-					"command": "extension.agfcontext",
+					"command": "extension.agfcreate",
+					"group": "2_workspace",
+					"when": "view == agfexplorerview"
+				},
+				{
+					"command": "extension.agfcreatefolder",
+					"group": "2_workspace",
+					"when": "view == agfexplorerview"
+				},
+				{
+					"command": "extension.agfrefresh",
 					"group": "2_workspace",
 					"when": "view == agfexplorerview"
 				},

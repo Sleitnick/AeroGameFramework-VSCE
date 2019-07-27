@@ -1,5 +1,10 @@
 # Changelog
 
+## Alpha 0.0.15
+
+- Added Folder command to context menu
+- Added Refresh command to context menu
+
 ## Alpha 0.0.14
 
 - Fixed a bug preventing the treeview from working on MacOS

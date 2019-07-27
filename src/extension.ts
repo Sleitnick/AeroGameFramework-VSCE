@@ -71,6 +71,16 @@ const AGF_DIR_STRUCTURE = {
 	}
 };
 
+const AGF_VALID_FOLDER_PARENTS = [
+	"src/Server/Services",
+	"src/Server/Modules",
+	"src/Client/Controllers",
+	"src/Client/Modules",
+	"src/Shared"
+];
+
+const AGF_INIT_FILES = ["init.lua", "init.server.lua", "init.client.lua"];
+
 const AGF_FILE = JSON.stringify({"agf": true}, null, 2);
 
 const VSCODE_PROJECT_SETTINGS = JSON.stringify({
@@ -193,6 +203,48 @@ const getSourceFileName = async (dirpath: string | null, selectionEnv: string, s
 	}
 };
 
+const getFolderName = async (parentPath: string): Promise<string | undefined> => {
+	const valueHolder = "Folder";
+	const folderName = await vscode.window.showInputBox({
+		placeHolder: "FolderName",
+		prompt: "Create new folder",
+		value: valueHolder,
+		valueSelection: [0, valueHolder.length],
+		validateInput: async (value: string): Promise<string | null> => {
+			value = value.trim();
+			if (value.match(/^\d/g)) {
+				return "Name cannot begin with a number";
+			} else if (value.match(/[^a-z0-9]/gi)) {
+				return "Name must be alpha-numeric";
+			}
+			return (await fsutil.doesFileExist(path.join(parentPath, value))) ? `${value} already exists` : null;
+		}
+	});
+	if (folderName) {
+		return folderName.trim();
+	}
+};
+
+const isValidFolderParent = (rootDir: string, dirpath: string): boolean => {
+	for (const relParentPath of AGF_VALID_FOLDER_PARENTS) {
+		const parentPath = path.join(rootDir, relParentPath);
+		if (dirpath.startsWith(parentPath)) {
+			return true;
+		}
+	}
+	return false;
+};
+
+const hasInitFile = (filepath: string): Promise<boolean> => {
+	const promises = AGF_INIT_FILES.map((initFile): Promise<boolean> => fsutil.doesFileExist(path.join(filepath, initFile)));
+	return Promise.all(promises).then((results): boolean => {
+		for (const result of results) {
+			if (result) return true;
+		}
+		return false;
+	});
+}
+
 export function activate(context: vscode.ExtensionContext): void {
 	
 	vscode.commands.executeCommand("setContext", "isAgfProject", true);
@@ -240,7 +292,7 @@ export function activate(context: vscode.ExtensionContext): void {
 		vscode.window.showInformationMessage("AeroGameFramework initialized");
 	});
 
-	const agfContextMenu = vscode.commands.registerCommand("extension.agfcontext", async (node: AGFNode): Promise<void> => {
+	const agfCreateMenu = vscode.commands.registerCommand("extension.agfcreate", async (node: AGFNode): Promise<void> => {
 		const PROJECT_ROOT = workspaceFolders[0].uri.fsPath;
 		if (node && path.basename(node.filepath) === "init.lua") {
 			vscode.window.showWarningMessage("Cannot created nested module in init file");
@@ -251,7 +303,7 @@ export function activate(context: vscode.ExtensionContext): void {
 			return;
 		}
 		if (envType.custom) {
-			let dirpath: string;
+			let dirpath = "";
 			let fileName: string | undefined;
 			if (envType.custom.isDir) {
 				dirpath = envType.custom.path;
@@ -262,8 +314,9 @@ export function activate(context: vscode.ExtensionContext): void {
 			if (fileName) {
 				if (!envType.custom.isDir) {
 					dirpath = await transformLuaIntoInit(node.filepath);
-				} else {
-					dirpath = "";
+				}
+				if (!dirpath) {
+					return Promise.reject("No dirpath");
 				}
 				const filePath = path.join(dirpath, `${fileName}.lua`);
 				const exists = await fsutil.doesFileExist(filePath);
@@ -296,6 +349,28 @@ export function activate(context: vscode.ExtensionContext): void {
 			}
 		}
 	});
+	
+	const agfCreateFolderMenu = vscode.commands.registerCommand("extension.agfcreatefolder", async (node: AGFNode): Promise<void> => {
+		if ((!node) || (!(await fsutil.isDir(node.filepath))) || await hasInitFile(node.filepath)) return;
+		const workspaceFolders = vscode.workspace.workspaceFolders;
+		if (!workspaceFolders) return Promise.reject(null);
+		const rootDir = workspaceFolders[0].uri.fsPath;
+		if (!isValidFolderParent(rootDir, node.filepath)) return;
+		const folderName = await getFolderName(node.filepath);
+		if (folderName) {
+			const dirPath = path.join(node.filepath, folderName);
+			const exists = await fsutil.doesFileExist(dirPath);
+			if (exists) {
+				vscode.window.showErrorMessage(`${folderName} already exists`);
+			} else {
+				const created = await fsutil.createDirIfNotExist(dirPath);
+				if (created) {
+					vscode.window.showInformationMessage(`Created ${folderName}`);
+					agfExplorer.refresh();
+				}
+			}
+		}
+	});
 
 	const agfDeleteMenu = vscode.commands.registerCommand("extension.agfdelete", async (node: AGFNode): Promise<void> => {
 		if (!node) return;
@@ -307,9 +382,9 @@ export function activate(context: vscode.ExtensionContext): void {
 	});
 
 	agfStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-	agfStatusBarItem.command = "extension.agfcontext";
+	agfStatusBarItem.command = "extension.agfcreate";
 	agfStatusBarItem.text = "$(code) AGF";
-	context.subscriptions.push(agf, agfContextMenu, agfDeleteMenu, agfStatusBarItem, agfRefresh);
+	context.subscriptions.push(agf, agfCreateMenu, agfCreateFolderMenu, agfDeleteMenu, agfStatusBarItem, agfRefresh);
 	agfStatusBarItem.show();
 	
 }
