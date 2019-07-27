@@ -51,10 +51,29 @@ export function getFileType(filepath: string): Promise<FsFileType> {
 	});
 }
 
+
+export function isDir(filepath: string): Promise<boolean> {
+	return new Promise<boolean>((resolve, reject): void => {
+		fs.stat(filepath, (err, stats): void => {
+			if (err) {
+				if (err.code === "ENOENT") {
+					resolve(false);
+				} else {
+					reject(err);
+				}
+			} else {
+				resolve(stats.isDirectory());
+			}
+		});
+	});
+}
+
 export function createFile(filepath: string, data: string): Promise<void> {
 	return new Promise<void>((resolve, reject): void => {
+		console.log(`Creating file: ${filepath}`);
 		fs.writeFile(filepath, data, {encoding: "utf8"}, (err): void => {
 			if (err) {
+				console.error(err);
 				reject(err);
 			} else {
 				resolve();
