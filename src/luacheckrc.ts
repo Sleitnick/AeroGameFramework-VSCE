@@ -254,6 +254,8 @@ stds.roblox = {
 		
 		table = def_fields({"concat", "foreach", "foreachi", "getn", "insert", "remove", "sort", "move", "pack", "unpack", "create"}),
 
+		bit32 = def_fields({"arshift", "band", "bnot", "bor", "btest", "bxor", "extract", "replace", "lrotate", "lshift", "rrotate", "rshift"}),
+
 		debug = def_fields({"traceback", "profilebegin", "profileend"}),
 
 		utf8 = def_fields({"char", "codes", "codepoint", "len", "offset", "graphemes",

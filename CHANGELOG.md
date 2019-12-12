@@ -1,5 +1,9 @@
 # Changelog
 
+## Alpha 0.0.16
+
+- Update luacheckrc to include new table and bit32 methods
+
 ## Alpha 0.0.15
 
 - Added Folder command to context menu
