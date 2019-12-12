@@ -251,6 +251,8 @@ stds.roblox = {
 			"deg", "exp", "floor", "fmod", "frexp", "ldexp", "log", "log10", "max", "min", "modf",
 			"noise", "pow", "rad", "random", "randomseed", "sign", "sin", "sinh", "sqrt", "tan",
 			"tanh", "huge", "pi"}),
+		
+		table = def_fields({"concat", "foreach", "foreachi", "getn", "insert", "remove", "sort", "move", "pack", "unpack", "create"}),
 
 		debug = def_fields({"traceback", "profilebegin", "profileend"}),
 
