@@ -26,10 +26,6 @@ export const Rojo4 = JSON.stringify({
 			"path": "src/_framework/rep_first",
 			"target": "ReplicatedFirst.Aero"
 		},
-		"_ReplicatedStorageInternal": {
-			"path": "src/_framework/rep_internal",
-			"target": "ReplicatedStorage.Aero.Internal"
-		},
 		"_ServerScriptService": {
 			"path": "src/_framework/server_internal",
 			"target": "ServerScriptService.Aero.Internal"
@@ -51,9 +47,6 @@ export const Rojo5 = JSON.stringify({
 				"$className": "Folder",
 				"Shared": {
 					"$path": "src/Shared"
-				},
-				"Internal": {
-					"$path": "src/_framework/rep_internal"
 				}
 			}
 		},

@@ -249,8 +249,6 @@ export function activate(context: vscode.ExtensionContext): void {
 	
 	vscode.commands.executeCommand("setContext", "isAgfProject", true);
 
-	let agfStatusBarItem: vscode.StatusBarItem;
-
 	const workspaceFolders = vscode.workspace.workspaceFolders;
 	if (!workspaceFolders) return;
 	const agfExplorer = new AGFExplorer(workspaceFolders[0].uri.fsPath);
@@ -381,7 +379,7 @@ export function activate(context: vscode.ExtensionContext): void {
 		agfExplorer.refresh();
 	});
 
-	agfStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+	const agfStatusBarItem: vscode.StatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
 	agfStatusBarItem.command = "extension.agfcreate";
 	agfStatusBarItem.text = "$(code) AGF";
 	context.subscriptions.push(agf, agfCreateMenu, agfCreateFolderMenu, agfDeleteMenu, agfStatusBarItem, agfRefresh);
