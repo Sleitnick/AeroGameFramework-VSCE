@@ -1,5 +1,9 @@
 # Changelog
 
+## Alpha 0.0.17
+
+- Update Rojo templates
+
 ## Alpha 0.0.16
 
 - Update luacheckrc to include new table and bit32 methods
