@@ -372,7 +372,12 @@ export function activate(context: vscode.ExtensionContext): void {
 
 	const agfDeleteMenu = vscode.commands.registerCommand("extension.agfdelete", async (node: AGFNode): Promise<void> => {
 		if (!node) return;
-		fsutil.deleteFile(node.filepath).then((): void => agfExplorer.refresh());
+		fsutil.deleteFile(node.filepath).then((): void => {
+			agfExplorer.refresh();
+			vscode.window.showInformationMessage(`Deleted ${node.filepath}`);
+		}).catch((err) => {
+			vscode.window.showErrorMessage(err);
+		});
 	});
 
 	const agfRefresh = vscode.commands.registerCommand("extension.agfrefresh", async (): Promise<void> => {

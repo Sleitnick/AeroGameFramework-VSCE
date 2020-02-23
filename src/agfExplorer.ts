@@ -2,6 +2,12 @@ import * as vscode from "vscode";
 import * as path from "path";
 import * as fsutil from "./fsutil";
 
+enum ScriptType {
+	Server = "script.png",
+	Local = "script_local.png",
+	Module = "script_module.png"
+}
+
 export class AGFNode extends vscode.TreeItem {
 
 	public constructor(
@@ -9,11 +15,12 @@ export class AGFNode extends vscode.TreeItem {
 		public readonly collapsibleState: vscode.TreeItemCollapsibleState,
 		public readonly filepath: string,
 		public readonly fileType: fsutil.FsFileType,
+		public readonly scriptType: ScriptType,
 		public readonly initFile?: string,
 		iconOverride?: string
 	) {
 		super(label, collapsibleState);
-		this.iconPath = iconOverride || path.join(__filename, "..", "..", "resources", (fileType == fsutil.FsFileType.Directory && !initFile ? "folder.png" : "script.png"));
+		this.iconPath = iconOverride || path.join(__filename, "..", "..", "resources", (fileType == fsutil.FsFileType.Directory && !initFile ? "folder.png" : scriptType));
 	}
 
 	public get tooltip(): string {
@@ -31,8 +38,10 @@ export class AGFTreeDataProvider implements vscode.TreeDataProvider<AGFNode> {
 
 	private specialIcons: {[key: string]: string};
 	private sorting: {[key: string]: number};
+	private treeBasepath: string;
 
 	public constructor(private basepath: string) {
+		this.treeBasepath = basepath;
 		const resourcePath = path.join(__filename, "..", "..", "resources");
 		this.specialIcons = {
 			[path.join(basepath, "src", "Server")]: path.join(resourcePath, "server.png"),
@@ -54,7 +63,7 @@ export class AGFTreeDataProvider implements vscode.TreeDataProvider<AGFNode> {
 		};
 	}
 
-	private getInitFile(filepath: string): Promise<string | undefined> {
+	private getInitFile = (filepath: string): Promise<string | undefined> => {
 		const initFiles = ["init.lua", "init.server.lua", "init.client.lua"];
 		const promises = [];
 		for (const initFile of initFiles) {
@@ -67,11 +76,11 @@ export class AGFTreeDataProvider implements vscode.TreeDataProvider<AGFNode> {
 		});
 	}
 	
-	public getTreeItem(node: AGFNode): vscode.TreeItem | Thenable<vscode.TreeItem> {
+	public getTreeItem = (node: AGFNode): vscode.TreeItem | Thenable<vscode.TreeItem> => {
 		return node;
 	}
 
-	public getChildren(node?: AGFNode | undefined): Thenable<AGFNode[]> {
+	public getChildren = (node?: AGFNode | undefined): Thenable<AGFNode[]> => {
 		const collapsedState = vscode.TreeItemCollapsibleState.Collapsed;
 		const noneState = vscode.TreeItemCollapsibleState.None;
 		const srcDir = path.join(this.basepath, "src");
@@ -88,9 +97,10 @@ export class AGFTreeDataProvider implements vscode.TreeDataProvider<AGFNode> {
 						name += ".lua";
 					}
 					const icon = this.specialIcons[fullPath];
+					const scriptType = this.determineScriptType(fullPath);
 					nodePromises.push(
 						fsutil.getFileType(fullPath).then((fileType): AGFNode =>
-							new AGFNode(name, fileType == fsutil.FsFileType.Directory ? collapsedState : noneState, fullPath, fileType, initFile, icon))
+							new AGFNode(path.parse(name).name, fileType == fsutil.FsFileType.Directory ? collapsedState : noneState, fullPath, fileType, scriptType, initFile, icon))
 					);
 				}
 				const result = Promise.all(nodePromises);
@@ -107,9 +117,10 @@ export class AGFTreeDataProvider implements vscode.TreeDataProvider<AGFNode> {
 					const name = path.basename(filepath);
 					if (name === "_framework") continue;
 					const icon = this.specialIcons[fullPath];
+					const scriptType = this.determineScriptType(fullPath);
 					nodePromises.push(
 						fsutil.getFileType(fullPath).then((fileType): AGFNode =>
-							new AGFNode(name, fileType == fsutil.FsFileType.Directory ? collapsedState : noneState, fullPath, fileType, undefined, icon))
+							new AGFNode(path.parse(name).name, fileType == fsutil.FsFileType.Directory ? collapsedState : noneState, fullPath, fileType, scriptType, undefined, icon))
 					);
 				}
 				return Promise.all(nodePromises).then((results): AGFNode[] => results.sort((a, b): number => (this.sorting[a.label] - this.sorting[b.label])));
@@ -117,7 +128,23 @@ export class AGFTreeDataProvider implements vscode.TreeDataProvider<AGFNode> {
 		}
 	}
 
-	public refresh(): void {
+	private determineScriptType = (filepath: string): ScriptType => {
+		const clientModules = path.join(this.treeBasepath, "src", "Client", "Modules");
+		const clientControllers = path.join(this.treeBasepath, "src", "Client", "Controllers");
+		const serverModules = path.join(this.treeBasepath, "src", "Server", "Modules");
+		const serverServices = path.join(this.treeBasepath, "src", "Server", "Controllers");
+		const shared = path.join(this.treeBasepath, "src", "Shared",);
+		if (filepath.startsWith(clientModules) || filepath.startsWith(serverModules) || filepath.startsWith(shared)) {
+			return ScriptType.Module;
+		} else if (filepath.startsWith(clientControllers)) {
+			return ScriptType.Local;
+		} else if (filepath.startsWith(serverServices)) {
+			return ScriptType.Server;
+		}
+		return ScriptType.Server;
+	}
+
+	public refresh = (): void => {
 		this._onDidChangeTreeData.fire();
 	}
 
@@ -141,7 +168,7 @@ export class AGFExplorer {
 		});
 	}
 
-	public refresh(): void {
+	public refresh = (): void => {
 		this.dataProvider.refresh();
 	}
 
