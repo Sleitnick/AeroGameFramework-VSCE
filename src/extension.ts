@@ -372,9 +372,16 @@ export function activate(context: vscode.ExtensionContext): void {
 
 	const agfDeleteMenu = vscode.commands.registerCommand("extension.agfdelete", async (node: AGFNode): Promise<void> => {
 		if (!node) return;
-		fsutil.deleteFile(node.filepath).then((): void => {
+		let deleteFunc: (filepath: string) => Promise<void>;
+		const name = path.parse(node.filepath).name;
+		if (node.fileType === fsutil.FsFileType.Directory) {
+			deleteFunc = fsutil.deleteDir;
+		} else {
+			deleteFunc = fsutil.deleteFile;
+		}
+		deleteFunc(node.filepath).then((): void => {
 			agfExplorer.refresh();
-			vscode.window.showInformationMessage(`Deleted ${node.filepath}`);
+			vscode.window.showInformationMessage(`Deleted ${name}`);
 		}).catch((err) => {
 			vscode.window.showErrorMessage(err);
 		});

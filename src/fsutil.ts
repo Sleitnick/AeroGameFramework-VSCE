@@ -1,6 +1,7 @@
 "use strict";
 
 import * as fs from "fs";
+import * as rimraf from "rimraf";
 
 export enum FsFileType {
 	None,
@@ -140,6 +141,18 @@ export function readDir(filepath: string): Promise<string[]> {
 				reject(err);
 			} else {
 				resolve(files);
+			}
+		});
+	});
+}
+
+export function deleteDir(filepath: string): Promise<void> {
+	return new Promise<void>((resolve, reject): void => {
+		rimraf(filepath, {disableGlob: true}, (err) => {
+			if (err) {
+				reject(err);
+			} else {
+				resolve();
 			}
 		});
 	});
