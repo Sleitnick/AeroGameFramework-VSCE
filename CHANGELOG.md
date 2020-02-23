@@ -1,5 +1,11 @@
 # Changelog
 
+## Alpha 0.0.18
+
+- Allow names to have underscores
+- Allow directories to be deleted
+- More icons to differentiate scripts
+
 ## Alpha 0.0.17
 
 - Update Rojo templates
