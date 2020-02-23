@@ -1,7 +1,7 @@
 {
 	"name": "aerogameframework",
 	"displayName": "AeroGameFramework",
-	"version": "0.0.18",
+	"version": "0.0.19",
 	"description": "VSC extension for AeroGameFramework",
 	"author": {
 		"name": "Stephen Leitnick"
@@ -31,7 +31,7 @@
 		"onCommand:extension.agfinit",
 		"workspaceContains:*.agf"
 	],
-	"main": "./out/extension.js",
+	"main": "./dist/extension.js",
 	"contributes": {
 		"commands": [
 			{
@@ -127,25 +127,29 @@
 		}
 	},
 	"scripts": {
-		"vscode:prepublish": "npm run compile",
-		"compile": "tsc -p ./",
-		"watch": "tsc -watch -p ./",
-		"test": "npm run compile && node ./out/test/runTest.js"
+		"vscode:prepublish": "webpack --mode production",
+		"webpack": "webpack --mode development",
+		"webpack-dev": "webpack --mode development --watch",
+		"test": "npm run webpack && node ./out/test/runTest.js",
+		"test-compile": "tsc -p ./"
 	},
 	"devDependencies": {
 		"@types/glob": "^7.1.1",
-		"@types/mocha": "^5.2.7",
-		"@types/node": "^12.12.21",
+		"@types/mocha": "^7.0.1",
+		"@types/node": "^13.7.4",
 		"@types/rimraf": "^2.0.3",
-		"@types/vscode": "^1.41.0",
-		"@typescript-eslint/eslint-plugin": "^2.12.0",
-		"@typescript-eslint/parser": "^2.12.0",
-		"@typescript-eslint/typescript-estree": "^2.12.0",
-		"eslint": "^6.7.2",
+		"@types/vscode": "^1.42.0",
+		"@typescript-eslint/eslint-plugin": "^2.20.0",
+		"@typescript-eslint/parser": "^2.20.0",
+		"@typescript-eslint/typescript-estree": "^2.20.0",
+		"eslint": "^6.8.0",
 		"glob": "^7.1.6",
-		"mocha": "^6.2.2",
-		"typescript": "^3.7.3",
-		"vscode-test": "^1.3.0"
+		"mocha": "^7.0.1",
+		"ts-loader": "^6.2.1",
+		"typescript": "^3.8.2",
+		"vscode-test": "^1.3.0",
+		"webpack": "^4.41.6",
+		"webpack-cli": "^3.3.11"
 	},
 	"dependencies": {
 		"@types/node-fetch": "^2.5.4",
