@@ -129,19 +129,16 @@ export class AGFTreeDataProvider implements vscode.TreeDataProvider<AGFNode> {
 	}
 
 	private determineScriptType = (filepath: string): ScriptType => {
-		const clientModules = path.join(this.treeBasepath, "src", "Client", "Modules");
 		const clientControllers = path.join(this.treeBasepath, "src", "Client", "Controllers");
-		const serverModules = path.join(this.treeBasepath, "src", "Server", "Modules");
-		const serverServices = path.join(this.treeBasepath, "src", "Server", "Controllers");
-		const shared = path.join(this.treeBasepath, "src", "Shared",);
-		if (filepath.startsWith(clientModules) || filepath.startsWith(serverModules) || filepath.startsWith(shared)) {
-			return ScriptType.Module;
-		} else if (filepath.startsWith(clientControllers)) {
+		const serverServices = path.join(this.treeBasepath, "src", "Server", "Services");
+		const filedir = path.parse(filepath).dir;
+		if (filedir == clientControllers) {
 			return ScriptType.Local;
-		} else if (filepath.startsWith(serverServices)) {
+		} else if (filedir == serverServices) {
 			return ScriptType.Server;
+		} else {
+			return ScriptType.Module;
 		}
-		return ScriptType.Server;
 	}
 
 	public refresh = (): void => {
