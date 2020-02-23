@@ -4,6 +4,7 @@ import * as moment from "moment";
 import { workspace } from "vscode";
 
 function header(name: string): string {
+	name = name.replace(/_/g, (): string => "");
 	const readableName = name.replace(/[A-Z][^A-Z]/g, (s): string => ` ${s}`).trim();
 	const author = workspace.getConfiguration("agf").get("username");
 	const date = moment().format("LL");

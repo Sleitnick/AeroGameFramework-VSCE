@@ -190,7 +190,7 @@ const getSourceFileName = async (dirpath: string | null, selectionEnv: string, s
 			value = value.trim();
 			if (value.match(/^\d/g)) {
 				return "Name cannot begin with a number";
-			} else if (value.match(/[^a-z0-9]/gi)) {
+			} else if (value.match(/[^a-z0-9_]/gi)) {
 				return "Name must be alpha-numeric";
 			} else if (value.toLowerCase() === "init") {
 				return "Name cannot be \"init\"";
