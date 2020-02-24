@@ -31,6 +31,15 @@ module.exports = {
 						loader: "ts-loader"
 					}
 				]
+			},
+			{
+				test: /\.(png|svg|jpg|gif)$/,
+				use: {
+					loader: "file-loader",
+					options: {
+						name: "resources/[name].[ext]"
+					}
+				}
 			}
 		]
 	}

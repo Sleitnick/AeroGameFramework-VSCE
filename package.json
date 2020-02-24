@@ -7,7 +7,7 @@
 		"name": "Stephen Leitnick"
 	},
 	"publisher": "aerogameframework-vsce",
-	"icon": "resources/logo_256.png",
+	"icon": "dist/resources/logo_256.png",
 	"galleryBanner": {
 		"color": "#31597F",
 		"theme": "dark"
@@ -31,7 +31,7 @@
 		"onCommand:extension.agfinit",
 		"workspaceContains:*.agf"
 	],
-	"main": "./dist/extension.js",
+	"main": "./dist/extension",
 	"contributes": {
 		"commands": [
 			{
@@ -41,12 +41,12 @@
 			{
 				"command": "extension.agfcreatefolder",
 				"title": "AeroGameFramework: Create Folder",
-				"icon": "resources/folder_add.png"
+				"icon": "dist/resources/folder_add.png"
 			},
 			{
 				"command": "extension.agfcreate",
 				"title": "AeroGameFramework: Create",
-				"icon": "resources/script_add.png"
+				"icon": "dist/resources/script_add.png"
 			},
 			{
 				"command": "extension.agfdelete",
@@ -55,7 +55,7 @@
 			{
 				"command": "extension.agfrefresh",
 				"title": "AeroGameFramework: Refresh",
-				"icon": "resources/arrow_refresh.png"
+				"icon": "dist/resources/arrow_refresh.png"
 			}
 		],
 		"keybindings": [
@@ -112,7 +112,7 @@
 				{
 					"id": "agfexplorer",
 					"title": "AGF Explorer",
-					"icon": "resources/logo.svg"
+					"icon": "dist/resources/logo.svg"
 				}
 			]
 		},
@@ -129,7 +129,7 @@
 	"scripts": {
 		"vscode:prepublish": "webpack --mode production",
 		"webpack": "webpack --mode development",
-		"webpack-dev": "webpack --mode development --watch",
+		"webpack-dev": "webpack --mode development --watch --info-verbosity verbose",
 		"test": "npm run webpack && node ./out/test/runTest.js",
 		"test-compile": "tsc -p ./"
 	},
@@ -143,6 +143,7 @@
 		"@typescript-eslint/parser": "^2.20.0",
 		"@typescript-eslint/typescript-estree": "^2.20.0",
 		"eslint": "^6.8.0",
+		"file-loader": "^5.1.0",
 		"glob": "^7.1.6",
 		"mocha": "^7.0.1",
 		"ts-loader": "^6.2.1",

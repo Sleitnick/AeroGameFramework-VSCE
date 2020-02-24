@@ -2,11 +2,16 @@ import * as vscode from "vscode";
 import * as path from "path";
 import * as fsutil from "./fsutil";
 
-enum ScriptType {
-	Server = "script.png",
-	Local = "script_local.png",
-	Module = "script_module.png"
-}
+import scriptPng from "../resources/script.png";
+import scriptLocalPng from "../resources/script_local.png";
+import scriptModulePng from "../resources/script_module.png";
+import folderPng from "../resources/folder.png";
+
+import "../resources/logo.svg";
+import "../resources/logo_256.png";
+import "../resources/script_add.png";
+import "../resources/folder_add.png";
+//import "../resources/arrow_refresh.png";
 
 export class AGFNode extends vscode.TreeItem {
 
@@ -15,12 +20,17 @@ export class AGFNode extends vscode.TreeItem {
 		public readonly collapsibleState: vscode.TreeItemCollapsibleState,
 		public readonly filepath: string,
 		public readonly fileType: fsutil.FsFileType,
-		public readonly scriptType: ScriptType,
+		public readonly scriptIcon: string,
 		public readonly initFile?: string,
 		iconOverride?: string
 	) {
 		super(label, collapsibleState);
-		this.iconPath = iconOverride || path.join(__filename, "..", "..", "resources", (fileType == fsutil.FsFileType.Directory && !initFile ? "folder.png" : scriptType));
+		this.iconPath = iconOverride || (fileType == fsutil.FsFileType.Directory && !initFile ? folderPng : scriptIcon);
+		this.iconPath = path.join(__filename, "..", "..", this.iconPath as string);
+		fsutil.doesFileExist(this.iconPath as string).then((exists) => {
+			console.log(`${this.iconPath} exists: ${exists ? "YES" : "NO"}`);
+		});
+		console.log(__dirname, this.iconPath, scriptIcon);
 	}
 
 	public get tooltip(): string {
@@ -97,10 +107,11 @@ export class AGFTreeDataProvider implements vscode.TreeDataProvider<AGFNode> {
 						name += ".lua";
 					}
 					const icon = this.specialIcons[fullPath];
-					const scriptType = this.determineScriptType(fullPath);
+					const scriptIcon = this.determineScriptIcon(fullPath);
+					console.log("SCRIPT ICON", scriptIcon);
 					nodePromises.push(
 						fsutil.getFileType(fullPath).then((fileType): AGFNode =>
-							new AGFNode(path.parse(name).name, fileType == fsutil.FsFileType.Directory ? collapsedState : noneState, fullPath, fileType, scriptType, initFile, icon))
+							new AGFNode(path.parse(name).name, fileType == fsutil.FsFileType.Directory ? collapsedState : noneState, fullPath, fileType, scriptIcon, initFile, icon))
 					);
 				}
 				const result = Promise.all(nodePromises);
@@ -117,10 +128,11 @@ export class AGFTreeDataProvider implements vscode.TreeDataProvider<AGFNode> {
 					const name = path.basename(filepath);
 					if (name === "_framework") continue;
 					const icon = this.specialIcons[fullPath];
-					const scriptType = this.determineScriptType(fullPath);
+					const scriptIcon = this.determineScriptIcon(fullPath);
+					console.log("SCRIPT ICON", scriptIcon);
 					nodePromises.push(
 						fsutil.getFileType(fullPath).then((fileType): AGFNode =>
-							new AGFNode(path.parse(name).name, fileType == fsutil.FsFileType.Directory ? collapsedState : noneState, fullPath, fileType, scriptType, undefined, icon))
+							new AGFNode(path.parse(name).name, fileType == fsutil.FsFileType.Directory ? collapsedState : noneState, fullPath, fileType, scriptIcon, undefined, icon))
 					);
 				}
 				return Promise.all(nodePromises).then((results): AGFNode[] => results.sort((a, b): number => (this.sorting[a.label] - this.sorting[b.label])));
@@ -128,16 +140,16 @@ export class AGFTreeDataProvider implements vscode.TreeDataProvider<AGFNode> {
 		}
 	}
 
-	private determineScriptType = (filepath: string): ScriptType => {
+	private determineScriptIcon = (filepath: string): string => {
 		const clientControllers = path.join(this.treeBasepath, "src", "Client", "Controllers");
 		const serverServices = path.join(this.treeBasepath, "src", "Server", "Services");
 		const filedir = path.parse(filepath).dir;
 		if (filedir == clientControllers) {
-			return ScriptType.Local;
+			return scriptLocalPng;
 		} else if (filedir == serverServices) {
-			return ScriptType.Server;
+			return scriptPng;
 		} else {
-			return ScriptType.Module;
+			return scriptModulePng;
 		}
 	}
 
@@ -163,6 +175,7 @@ export class AGFExplorer {
 				});
 			}
 		});
+		console.log("ScriptPng", scriptPng);
 	}
 
 	public refresh = (): void => {
