@@ -72,7 +72,6 @@ export class AGFTreeDataProvider implements vscode.TreeDataProvider<AGFNode> {
 			[path.join(basepath, "src", "Server", "Modules")]: path.join(resourcesFolder, "package.png"),
 			[path.join(basepath, "src", "Server", "Services")]: path.join(resourcesFolder, "table.png"),
 		};
-		log.info("SpecialIcons", this.specialIcons);
 		this.sorting = {
 			[path.join(basepath, "src", "Server")]: 0,
 			[path.join(basepath, "src", "Client")]: 1,
@@ -118,8 +117,7 @@ export class AGFTreeDataProvider implements vscode.TreeDataProvider<AGFNode> {
 						name += ".lua";
 					}
 					const icon = this.specialIcons[fullPath];
-					const scriptIcon = this.determineScriptIcon(fullPath);
-					log.info("SCRIPT ICON", scriptIcon);
+					const scriptIcon = await this.determineScriptIcon(fullPath);
 					nodePromises.push(
 						fsutil.getFileType(fullPath).then((fileType): AGFNode =>
 							new AGFNode(path.parse(name).name, fileType == fsutil.FsFileType.Directory ? collapsedState : noneState, fullPath, fileType, scriptIcon, initFile, icon))
@@ -132,14 +130,14 @@ export class AGFTreeDataProvider implements vscode.TreeDataProvider<AGFNode> {
 				return result;
 			});
 		} else {
-			return fsutil.readDir(srcDir).then((filepaths): Promise<AGFNode[]> => {
+			return fsutil.readDir(srcDir).then(async (filepaths): Promise<AGFNode[]> => {
 				const nodePromises: Promise<AGFNode>[] = [];
 				for (const filepath of filepaths) {
 					const fullPath = path.join(srcDir, filepath);
 					const name = path.basename(filepath);
 					if (name === "_framework") continue;
 					const icon = this.specialIcons[fullPath];
-					const scriptIcon = this.determineScriptIcon(fullPath);
+					const scriptIcon = await this.determineScriptIcon(fullPath);
 					log.info("SCRIPT ICON", scriptIcon);
 					nodePromises.push(
 						fsutil.getFileType(fullPath).then((fileType): AGFNode =>
@@ -151,14 +149,24 @@ export class AGFTreeDataProvider implements vscode.TreeDataProvider<AGFNode> {
 		}
 	}
 
-	private determineScriptIcon = (filepath: string): string => {
+	private isNested = async (filepath: string): Promise<boolean> => {
+		const dir = path.dirname(filepath);
+		log.info("Checking for init file in " + dir);
+		const initFile = await this.getInitFile(dir);
+		log.info(filepath + " is nested: " + (initFile ? "YES" : "NO") + " (" + initFile?.toString() + ")");
+		return initFile ? true : false;
+	}
+
+	private determineScriptIcon = async (filepath: string): Promise<string> => {
 		const clientControllers = path.join(this.treeBasepath, "src", "Client", "Controllers");
 		const serverServices = path.join(this.treeBasepath, "src", "Server", "Services");
 		const filedir = path.parse(filepath).dir;
-		if (filedir == clientControllers) {
-			return path.join(distFolder, scriptLocalPng);
-		} else if (filedir == serverServices) {
-			return path.join(distFolder, scriptPng);
+		if (filedir.startsWith(clientControllers)) {
+			const isNested = await this.isNested(filepath);
+			return path.join(distFolder, isNested ? scriptModulePng : scriptLocalPng);
+		} else if (filedir.startsWith(serverServices)) {
+			const isNested = await this.isNested(filepath);
+			return path.join(distFolder, isNested ? scriptModulePng : scriptPng);
 		} else {
 			return path.join(distFolder, scriptModulePng);
 		}
