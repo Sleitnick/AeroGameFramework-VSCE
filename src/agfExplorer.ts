@@ -37,10 +37,6 @@ export class AGFNode extends vscode.TreeItem {
 	) {
 		super(label, collapsibleState);
 		this.iconPath = iconOverride || (fileType == fsutil.FsFileType.Directory && !initFile ? path.join(distFolder, folderPng) : scriptIcon);
-		fsutil.doesFileExist(this.iconPath as string).then((exists) => {
-			log.info(`${this.iconPath} exists: ${exists ? "YES" : "NO"}`);
-		});
-		log.info(__dirname, this.iconPath, scriptIcon);
 	}
 
 	public get tooltip(): string {
@@ -87,6 +83,22 @@ export class AGFTreeDataProvider implements vscode.TreeDataProvider<AGFNode> {
 		return node;
 	}
 
+	private sortNodes = (nodes: AGFNode[]): AGFNode[] => {
+		const folders: AGFNode[] = [];
+		const files: AGFNode[] = [];
+		for (const node of nodes) {
+			if (node.fileType === fsutil.FsFileType.File || typeof node.initFile !== "undefined") {
+				files.push(node);
+			} else {
+				folders.push(node);
+			}
+		}
+		log.info(`Sorting ${files.length} files & ${folders.length} folders`);
+		folders.sort((a, b) => a.label.localeCompare(b.label));
+		files.sort((a, b) => a.label.localeCompare(b.label));
+		return folders.concat(files);
+	}
+
 	public getChildren = (node?: AGFNode | undefined): Thenable<AGFNode[]> => {
 		const collapsedState = vscode.TreeItemCollapsibleState.Collapsed;
 		const noneState = vscode.TreeItemCollapsibleState.None;
@@ -112,9 +124,21 @@ export class AGFTreeDataProvider implements vscode.TreeDataProvider<AGFNode> {
 				}
 				const result = Promise.all(nodePromises);
 				if (typeof this.sorting[node.filepath] !== "undefined") {
-					result.then((results): AGFNode[] => results.sort((a, b): number => (this.sorting[a.filepath] - this.sorting[b.filepath])));
+					// Sort top-level items:
+					//return result.then((results): AGFNode[] => results.sort((a, b): number => (this.sorting[a.filepath] - this.sorting[b.filepath])));
+					//return result.then((results) => this.sortNodes(results));
+					return result.then((results) => {
+						if (results[0] && typeof this.sorting[results[0].filepath] !== "undefined") {
+							return results.sort((a, b): number => (this.sorting[a.filepath] - this.sorting[b.filepath]));
+						} else {
+							return this.sortNodes(results);
+						}
+					});
+				} else {
+					// Sort:
+					return result.then((results) => this.sortNodes(results));
 				}
-				return result;
+				//return result;
 			});
 		} else {
 			return fsutil.readDir(srcDir).then(async (filepaths): Promise<AGFNode[]> => {
@@ -125,7 +149,6 @@ export class AGFTreeDataProvider implements vscode.TreeDataProvider<AGFNode> {
 					if (name === "_framework") continue;
 					const icon = this.specialIcons[fullPath];
 					const scriptIcon = await this.determineScriptIcon(fullPath);
-					log.info("SCRIPT ICON", scriptIcon);
 					nodePromises.push(
 						fsutil.getFileType(fullPath).then((fileType): AGFNode =>
 							new AGFNode(path.parse(name).name, fileType == fsutil.FsFileType.Directory ? collapsedState : noneState, fullPath, fileType, scriptIcon, undefined, icon))
