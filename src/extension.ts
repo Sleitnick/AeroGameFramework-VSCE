@@ -6,6 +6,7 @@ import * as filelist from "./filelist";
 import * as fsutil from "./fsutil";
 import * as luaTemplates from "./luaTemplates";
 import * as rojoTemplates from "./rojoTemplates";
+import * as log from "./log";
 import luacheckrc from "./luacheckrc";
 import { AGFExplorer, AGFNode } from "./agfExplorer";
 
@@ -226,12 +227,15 @@ const getFolderName = async (parentPath: string): Promise<string | undefined> =>
 };
 
 const isValidFolderParent = (rootDir: string, dirpath: string): boolean => {
+	log.info("FOLDER", rootDir, dirpath);
 	for (const relParentPath of AGF_VALID_FOLDER_PARENTS) {
 		const parentPath = path.join(rootDir, relParentPath);
 		if (dirpath.startsWith(parentPath)) {
+			log.info("FOLDER YES");
 			return true;
 		}
 	}
+	log.info("FOLDER NO");
 	return false;
 };
 
