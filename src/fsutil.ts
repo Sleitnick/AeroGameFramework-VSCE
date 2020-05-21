@@ -1,6 +1,7 @@
 "use strict";
 
 import * as fs from "fs";
+import * as path from "path";
 import * as rimraf from "rimraf";
 import * as trash from "trash";
 import * as log from "./log";
@@ -125,16 +126,6 @@ export function copyFile(srcfile: string, dstfile: string): Promise<void> {
 }
 
 export function deleteFile(filepath: string): Promise<void> {
-	// return new Promise<void>((resolve, reject): void => {
-	// 	fs.unlink(filepath, (err): void => {
-	// 		if (err) {
-	// 			reject(err);
-	// 		} else {
-	// 			resolve();
-	// 		}
-	// 	});
-	// });
-	log.info("DELETE FILE", filepath);
 	return trash(filepath, {glob: false})
 		.then(() => log.info("TRASHED"))
 		.catch((e) => log.error(e))
@@ -163,5 +154,18 @@ export function deleteDir(filepath: string): Promise<void> {
 				resolve();
 			}
 		});
+	});
+}
+
+export function getInitFile(filepath: string): Promise<string | undefined> {
+	const initFiles = ["init.lua", "init.server.lua", "init.client.lua"];
+	const promises = [];
+	for (const initFile of initFiles) {
+		const fullPath = path.join(filepath, initFile);
+		promises.push(doesFileExist(fullPath).then((exists): string | null => exists ? fullPath : null));
+	}
+	return Promise.all(promises).then((results): string | undefined => {
+		const initFilepath = results.filter((result): boolean => result !== null)[0] || undefined;
+		return initFilepath;
 	});
 }

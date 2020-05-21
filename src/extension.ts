@@ -133,6 +133,28 @@ const getEnvType = async (filepath: string): Promise<EnvType | null> => {
 		const ext = path.extname(filepath);
 		const isDir = (await fsutil.getFileType(filepath)) === fsutil.FsFileType.Directory;
 		if (isDir) {
+			const hasInitFile = (await fsutil.getInitFile(filepath)) ? true : false;
+			if (!hasInitFile) {
+				// Nested controller or service:
+				if (filepath.startsWith(path.join(srcDir, "Client", "Controllers"))) {
+					return {
+						type: "Controller",
+						custom: {
+							isDir: true,
+							path: filepath
+						}
+					}
+				} else if (filepath.startsWith(path.join(srcDir, "Server", "Services"))) {
+					return {
+						type: "Service",
+						custom: {
+							isDir: true,
+							path: filepath
+						}
+					}
+				}
+			}
+			// Nested module:
 			return {
 				type: "Module",
 				custom: {
@@ -166,7 +188,7 @@ const getEnvType = async (filepath: string): Promise<EnvType | null> => {
 			}
 		}
 		if (type === "Module") {
-			const moduleTypes = ["Normal Module", "Class Module"];
+			const moduleTypes = ["Module", "Class"];
 			const moduleType = await vscode.window.showQuickPick(moduleTypes, {canPickMany: false});
 			if (moduleType === moduleTypes[1]) {
 				type = "Class";
@@ -227,15 +249,12 @@ const getFolderName = async (parentPath: string): Promise<string | undefined> =>
 };
 
 const isValidFolderParent = (rootDir: string, dirpath: string): boolean => {
-	log.info("FOLDER", rootDir, dirpath);
 	for (const relParentPath of AGF_VALID_FOLDER_PARENTS) {
 		const parentPath = path.join(rootDir, relParentPath);
 		if (dirpath.startsWith(parentPath)) {
-			log.info("FOLDER YES");
 			return true;
 		}
 	}
-	log.info("FOLDER NO");
 	return false;
 };
 

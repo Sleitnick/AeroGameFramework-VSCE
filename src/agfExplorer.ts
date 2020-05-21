@@ -82,19 +82,6 @@ export class AGFTreeDataProvider implements vscode.TreeDataProvider<AGFNode> {
 			[path.join(basepath, "src", "Client", "Modules")]: 1,
 		};
 	}
-
-	private getInitFile = (filepath: string): Promise<string | undefined> => {
-		const initFiles = ["init.lua", "init.server.lua", "init.client.lua"];
-		const promises = [];
-		for (const initFile of initFiles) {
-			const fullPath = path.join(filepath, initFile);
-			promises.push(fsutil.doesFileExist(fullPath).then((exists): string | null => exists ? fullPath : null));
-		}
-		return Promise.all(promises).then((results): string | undefined => {
-			const initFilepath = results.filter((result): boolean => result !== null)[0] || undefined;
-			return initFilepath;
-		});
-	}
 	
 	public getTreeItem = (node: AGFNode): vscode.TreeItem | Thenable<vscode.TreeItem> => {
 		return node;
@@ -112,7 +99,7 @@ export class AGFTreeDataProvider implements vscode.TreeDataProvider<AGFNode> {
 					if (name.startsWith("init.") && name.endsWith(".lua")) continue;
 					const fullPath = path.join(node.filepath, filepath);
 					const isDir = ((await fsutil.getFileType(fullPath)) === fsutil.FsFileType.Directory);
-					const initFile = (isDir ? await this.getInitFile(fullPath) : undefined);
+					const initFile = (isDir ? await fsutil.getInitFile(fullPath) : undefined);
 					if (initFile) {
 						name += ".lua";
 					}
@@ -151,9 +138,7 @@ export class AGFTreeDataProvider implements vscode.TreeDataProvider<AGFNode> {
 
 	private isNested = async (filepath: string): Promise<boolean> => {
 		const dir = path.dirname(filepath);
-		log.info("Checking for init file in " + dir);
-		const initFile = await this.getInitFile(dir);
-		log.info(filepath + " is nested: " + (initFile ? "YES" : "NO") + " (" + initFile?.toString() + ")");
+		const initFile = await fsutil.getInitFile(dir);
 		return initFile ? true : false;
 	}
 
@@ -194,12 +179,12 @@ export class AGFExplorer {
 				});
 			}
 		});
-		try {
-			const results = fs.readdirSync(path.join(path.dirname(__dirname), "dist", "resources"));
-			log.info("DIR", results);
-		} catch(e) {
-			log.error(e);
-		}
+		// try {
+		// 	const results = fs.readdirSync(path.join(path.dirname(__dirname), "dist", "resources"));
+		// 	log.info("DIR", results);
+		// } catch(e) {
+		// 	log.error(e);
+		// }
 	}
 
 	public refresh = (): void => {
