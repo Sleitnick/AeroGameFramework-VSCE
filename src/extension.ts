@@ -7,7 +7,7 @@ import * as fsutil from "./fsutil";
 import * as luaTemplates from "./luaTemplates";
 import * as rojoTemplates from "./rojoTemplates";
 import * as log from "./log";
-import luacheckrc from "./luacheckrc";
+import selene from "./selene";
 import { AGFExplorer, AGFNode } from "./agfExplorer";
 
 interface EnvTypeCustom {
@@ -281,14 +281,14 @@ export function activate(context: vscode.ExtensionContext): void {
 		const createAgf = fsutil.createFileIfNotExist(path.join(PROJECT_ROOT, ".agf"), AGF_FILE);
 		const creatingRojo4 = fsutil.createFileIfNotExist(path.join(PROJECT_ROOT, "rojo.json"), rojoTemplates.Rojo4);
 		const creatingRojo5 = fsutil.createFileIfNotExist(path.join(PROJECT_ROOT, "default.project.json"), rojoTemplates.Rojo5);
-		const createLuacheckRc = fsutil.createFileIfNotExist(path.join(PROJECT_ROOT, ".luacheckrc"), luacheckrc);
+		const createSeleneToml = fsutil.createFileIfNotExist(path.join(PROJECT_ROOT, "selene.toml"), selene);
 		const creatingInternal = createInternal();
 		await filelist.loadFilelist();
 		const creatingDirStructure = createDirStructure(AGF_DIR_STRUCTURE, PROJECT_ROOT);
 		await createAgf;
 		await creatingRojo4;
 		await creatingRojo5;
-		await createLuacheckRc;
+		await createSeleneToml;
 		await creatingInternal;
 		await creatingDirStructure;
 		vscode.window.showInformationMessage("AeroGameFramework initialized");
