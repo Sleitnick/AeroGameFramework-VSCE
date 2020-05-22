@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import * as path from "path";
 import * as fsutil from "./fsutil";
 import * as log from "./log";
-import * as fs from "fs";
+//import * as fs from "fs";
 
 import scriptPng from "../resources/script.png";
 import scriptLocalPng from "../resources/script_local.png";
@@ -181,7 +181,7 @@ export class AGFTreeDataProvider implements vscode.TreeDataProvider<AGFNode> {
 	}
 
 	public refresh = (): void => {
-		this._onDidChangeTreeData.fire();
+		this._onDidChangeTreeData.fire(undefined);
 	}
 
 }

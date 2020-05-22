@@ -6,7 +6,7 @@ import * as filelist from "./filelist";
 import * as fsutil from "./fsutil";
 import * as luaTemplates from "./luaTemplates";
 import * as rojoTemplates from "./rojoTemplates";
-import * as log from "./log";
+//import * as log from "./log";
 import selene from "./selene";
 import { AGFExplorer, AGFNode } from "./agfExplorer";
 
