@@ -7,3 +7,5 @@ webpack.config.json
 .gitignore
 .eslintrc.js
 /resources
+node_modules
+*.vsix
