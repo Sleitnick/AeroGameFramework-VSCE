@@ -3,7 +3,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as rimraf from "rimraf";
-import * as trash from "trash";
+//import * as trash from "trash";
 import * as log from "./log";
 
 export enum FsFileType {
@@ -126,10 +126,19 @@ export function copyFile(srcfile: string, dstfile: string): Promise<void> {
 }
 
 export function deleteFile(filepath: string): Promise<void> {
-	return trash(filepath, {glob: false})
-		.then(() => log.info("TRASHED"))
-		.catch((e) => log.error(e))
-		.finally(() => log.info("FINALLY TRASH"));
+	// return trash(filepath, {glob: false})
+	// 	.then(() => log.info("TRASHED"))
+	// 	.catch((e) => log.error(e))
+	// 	.finally(() => log.info("FINALLY TRASH"));
+	return new Promise<void>((resolve, reject): void => {
+		fs.unlink(filepath, (err): void => {
+			if (err) {
+				reject(err);
+			} else {
+				resolve();
+			}
+		});
+	});
 }
 
 export function readDir(filepath: string): Promise<string[]> {
