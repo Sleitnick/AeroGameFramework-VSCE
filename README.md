@@ -41,7 +41,7 @@ Be sure to install [Rojo](https://github.com/LPGhatguy/rojo), which will sync so
 - Create new AeroGameFramework projects
 - Generates boilerplate code for framework services, controllers, and modules
 - Includes Rojo configuration file for quick synchronization with Roblox Studio
-- Includes Luacheck configuration file
+- Includes Selene configuration file
 
 ## Requirements
 
@@ -50,8 +50,7 @@ Be sure to install [Rojo](https://github.com/LPGhatguy/rojo), which will sync so
 
 #### Recommended:
 - [Rojo for VS Code](https://marketplace.visualstudio.com/items?itemName=evaera.vscode-rojo)
-- [Luacheck](https://github.com/mpeterv/luacheck)
-- [vscode-lua](https://marketplace.visualstudio.com/items?itemName=trixnz.vscode-lua)
+- [Selene](https://kampfkarren.github.io/selene/selene.html)
 
 ## Acknowledgements
 
