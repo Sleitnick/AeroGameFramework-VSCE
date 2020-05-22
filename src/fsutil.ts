@@ -1,7 +1,10 @@
 "use strict";
 
 import * as fs from "fs";
+import * as path from "path";
 import * as rimraf from "rimraf";
+import * as trash from "trash";
+import * as log from "./log";
 
 export enum FsFileType {
 	None,
@@ -71,7 +74,7 @@ export function isDir(filepath: string): Promise<boolean> {
 
 export function createFile(filepath: string, data: string): Promise<void> {
 	return new Promise<void>((resolve, reject): void => {
-		console.log(`Creating file: ${filepath}`);
+		log.info(`Creating file: ${filepath}`);
 		fs.writeFile(filepath, data, {encoding: "utf8"}, (err): void => {
 			if (err) {
 				console.error(err);
@@ -123,15 +126,10 @@ export function copyFile(srcfile: string, dstfile: string): Promise<void> {
 }
 
 export function deleteFile(filepath: string): Promise<void> {
-	return new Promise<void>((resolve, reject): void => {
-		fs.unlink(filepath, (err): void => {
-			if (err) {
-				reject(err);
-			} else {
-				resolve();
-			}
-		});
-	});
+	return trash(filepath, {glob: false})
+		.then(() => log.info("TRASHED"))
+		.catch((e) => log.error(e))
+		.finally(() => log.info("FINALLY TRASH"));
 }
 
 export function readDir(filepath: string): Promise<string[]> {
@@ -147,6 +145,7 @@ export function readDir(filepath: string): Promise<string[]> {
 }
 
 export function deleteDir(filepath: string): Promise<void> {
+	log.info("DELETE DIR");
 	return new Promise<void>((resolve, reject): void => {
 		rimraf(filepath, {disableGlob: true}, (err) => {
 			if (err) {
@@ -155,5 +154,18 @@ export function deleteDir(filepath: string): Promise<void> {
 				resolve();
 			}
 		});
+	});
+}
+
+export function getInitFile(filepath: string): Promise<string | undefined> {
+	const initFiles = ["init.lua", "init.server.lua", "init.client.lua"];
+	const promises = [];
+	for (const initFile of initFiles) {
+		const fullPath = path.join(filepath, initFile);
+		promises.push(doesFileExist(fullPath).then((exists): string | null => exists ? fullPath : null));
+	}
+	return Promise.all(promises).then((results): string | undefined => {
+		const initFilepath = results.filter((result): boolean => result !== null)[0] || undefined;
+		return initFilepath;
 	});
 }

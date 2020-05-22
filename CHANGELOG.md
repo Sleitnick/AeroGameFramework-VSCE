@@ -1,5 +1,10 @@
 # Changelog
 
+## Alpha 0.0.19
+
+- Better support for nested controllers and services
+- Performance improvements and bug fixes
+
 ## Alpha 0.0.18
 
 - Allow names to have underscores

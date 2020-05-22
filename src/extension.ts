@@ -6,7 +6,8 @@ import * as filelist from "./filelist";
 import * as fsutil from "./fsutil";
 import * as luaTemplates from "./luaTemplates";
 import * as rojoTemplates from "./rojoTemplates";
-import luacheckrc from "./luacheckrc";
+//import * as log from "./log";
+import selene from "./selene";
 import { AGFExplorer, AGFNode } from "./agfExplorer";
 
 interface EnvTypeCustom {
@@ -132,6 +133,28 @@ const getEnvType = async (filepath: string): Promise<EnvType | null> => {
 		const ext = path.extname(filepath);
 		const isDir = (await fsutil.getFileType(filepath)) === fsutil.FsFileType.Directory;
 		if (isDir) {
+			const hasInitFile = (await fsutil.getInitFile(filepath)) ? true : false;
+			if (!hasInitFile) {
+				// Nested controller or service:
+				if (filepath.startsWith(path.join(srcDir, "Client", "Controllers"))) {
+					return {
+						type: "Controller",
+						custom: {
+							isDir: true,
+							path: filepath
+						}
+					}
+				} else if (filepath.startsWith(path.join(srcDir, "Server", "Services"))) {
+					return {
+						type: "Service",
+						custom: {
+							isDir: true,
+							path: filepath
+						}
+					}
+				}
+			}
+			// Nested module:
 			return {
 				type: "Module",
 				custom: {
@@ -165,7 +188,7 @@ const getEnvType = async (filepath: string): Promise<EnvType | null> => {
 			}
 		}
 		if (type === "Module") {
-			const moduleTypes = ["Normal Module", "Class Module"];
+			const moduleTypes = ["Module", "Class"];
 			const moduleType = await vscode.window.showQuickPick(moduleTypes, {canPickMany: false});
 			if (moduleType === moduleTypes[1]) {
 				type = "Class";
@@ -277,14 +300,14 @@ export function activate(context: vscode.ExtensionContext): void {
 		const createAgf = fsutil.createFileIfNotExist(path.join(PROJECT_ROOT, ".agf"), AGF_FILE);
 		const creatingRojo4 = fsutil.createFileIfNotExist(path.join(PROJECT_ROOT, "rojo.json"), rojoTemplates.Rojo4);
 		const creatingRojo5 = fsutil.createFileIfNotExist(path.join(PROJECT_ROOT, "default.project.json"), rojoTemplates.Rojo5);
-		const createLuacheckRc = fsutil.createFileIfNotExist(path.join(PROJECT_ROOT, ".luacheckrc"), luacheckrc);
+		const createSeleneToml = fsutil.createFileIfNotExist(path.join(PROJECT_ROOT, "selene.toml"), selene);
 		const creatingInternal = createInternal();
 		await filelist.loadFilelist();
 		const creatingDirStructure = createDirStructure(AGF_DIR_STRUCTURE, PROJECT_ROOT);
 		await createAgf;
 		await creatingRojo4;
 		await creatingRojo5;
-		await createLuacheckRc;
+		await createSeleneToml;
 		await creatingInternal;
 		await creatingDirStructure;
 		vscode.window.showInformationMessage("AeroGameFramework initialized");

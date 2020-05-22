@@ -1,12 +1,28 @@
 import * as vscode from "vscode";
 import * as path from "path";
 import * as fsutil from "./fsutil";
+import * as log from "./log";
+//import * as fs from "fs";
 
-enum ScriptType {
-	Server = "script.png",
-	Local = "script_local.png",
-	Module = "script_module.png"
-}
+import scriptPng from "../resources/script.png";
+import scriptLocalPng from "../resources/script_local.png";
+import scriptModulePng from "../resources/script_module.png";
+import folderPng from "../resources/folder.png";
+
+import "../resources/logo.svg";
+import "../resources/logo_256.png";
+import "../resources/script_add.png";
+import "../resources/folder_add.png";
+import "../resources/mouse.png";
+import "../resources/package.png";
+import "../resources/page_code.png";
+import "../resources/table.png";
+import "../resources/user.png";
+import "../resources/server.png";
+//import "../resources/arrow_refresh.png";
+
+const distFolder = path.join(path.dirname(__dirname), "dist");
+const resourcesFolder = path.join(distFolder, "resources");
 
 export class AGFNode extends vscode.TreeItem {
 
@@ -15,12 +31,12 @@ export class AGFNode extends vscode.TreeItem {
 		public readonly collapsibleState: vscode.TreeItemCollapsibleState,
 		public readonly filepath: string,
 		public readonly fileType: fsutil.FsFileType,
-		public readonly scriptType: ScriptType,
+		public readonly scriptIcon: string,
 		public readonly initFile?: string,
 		iconOverride?: string
 	) {
 		super(label, collapsibleState);
-		this.iconPath = iconOverride || path.join(__filename, "..", "..", "resources", (fileType == fsutil.FsFileType.Directory && !initFile ? "folder.png" : scriptType));
+		this.iconPath = iconOverride || (fileType == fsutil.FsFileType.Directory && !initFile ? path.join(distFolder, folderPng) : scriptIcon);
 	}
 
 	public get tooltip(): string {
@@ -42,15 +58,15 @@ export class AGFTreeDataProvider implements vscode.TreeDataProvider<AGFNode> {
 
 	public constructor(private basepath: string) {
 		this.treeBasepath = basepath;
-		const resourcePath = path.join(__filename, "..", "..", "resources");
+		//const resourcePath = path.join(__filename, "..", "..", "dist", "resources");
 		this.specialIcons = {
-			[path.join(basepath, "src", "Server")]: path.join(resourcePath, "server.png"),
-			[path.join(basepath, "src", "Client")]: path.join(resourcePath, "user.png"),
-			[path.join(basepath, "src", "Shared")]: path.join(resourcePath, "page_code.png"),
-			[path.join(basepath, "src", "Client", "Modules")]: path.join(resourcePath, "package.png"),
-			[path.join(basepath, "src", "Client", "Controllers")]: path.join(resourcePath, "mouse.png"),
-			[path.join(basepath, "src", "Server", "Modules")]: path.join(resourcePath, "package.png"),
-			[path.join(basepath, "src", "Server", "Services")]: path.join(resourcePath, "table.png"),
+			[path.join(basepath, "src", "Server")]: path.join(resourcesFolder, "server.png"),
+			[path.join(basepath, "src", "Client")]: path.join(resourcesFolder, "user.png"),
+			[path.join(basepath, "src", "Shared")]: path.join(resourcesFolder, "page_code.png"),
+			[path.join(basepath, "src", "Client", "Modules")]: path.join(resourcesFolder, "package.png"),
+			[path.join(basepath, "src", "Client", "Controllers")]: path.join(resourcesFolder, "mouse.png"),
+			[path.join(basepath, "src", "Server", "Modules")]: path.join(resourcesFolder, "package.png"),
+			[path.join(basepath, "src", "Server", "Services")]: path.join(resourcesFolder, "table.png"),
 		};
 		this.sorting = {
 			[path.join(basepath, "src", "Server")]: 0,
@@ -62,22 +78,25 @@ export class AGFTreeDataProvider implements vscode.TreeDataProvider<AGFNode> {
 			[path.join(basepath, "src", "Client", "Modules")]: 1,
 		};
 	}
-
-	private getInitFile = (filepath: string): Promise<string | undefined> => {
-		const initFiles = ["init.lua", "init.server.lua", "init.client.lua"];
-		const promises = [];
-		for (const initFile of initFiles) {
-			const fullPath = path.join(filepath, initFile);
-			promises.push(fsutil.doesFileExist(fullPath).then((exists): string | null => exists ? fullPath : null));
-		}
-		return Promise.all(promises).then((results): string | undefined => {
-			const initFilepath = results.filter((result): boolean => result !== null)[0] || undefined;
-			return initFilepath;
-		});
-	}
 	
 	public getTreeItem = (node: AGFNode): vscode.TreeItem | Thenable<vscode.TreeItem> => {
 		return node;
+	}
+
+	private sortNodes = (nodes: AGFNode[]): AGFNode[] => {
+		const folders: AGFNode[] = [];
+		const files: AGFNode[] = [];
+		for (const node of nodes) {
+			if (node.fileType === fsutil.FsFileType.File || typeof node.initFile !== "undefined") {
+				files.push(node);
+			} else {
+				folders.push(node);
+			}
+		}
+		log.info(`Sorting ${files.length} files & ${folders.length} folders`);
+		folders.sort((a, b) => a.label.localeCompare(b.label));
+		files.sort((a, b) => a.label.localeCompare(b.label));
+		return folders.concat(files);
 	}
 
 	public getChildren = (node?: AGFNode | undefined): Thenable<AGFNode[]> => {
@@ -92,35 +111,47 @@ export class AGFTreeDataProvider implements vscode.TreeDataProvider<AGFNode> {
 					if (name.startsWith("init.") && name.endsWith(".lua")) continue;
 					const fullPath = path.join(node.filepath, filepath);
 					const isDir = ((await fsutil.getFileType(fullPath)) === fsutil.FsFileType.Directory);
-					const initFile = (isDir ? await this.getInitFile(fullPath) : undefined);
+					const initFile = (isDir ? await fsutil.getInitFile(fullPath) : undefined);
 					if (initFile) {
 						name += ".lua";
 					}
 					const icon = this.specialIcons[fullPath];
-					const scriptType = this.determineScriptType(fullPath);
+					const scriptIcon = await this.determineScriptIcon(fullPath);
 					nodePromises.push(
 						fsutil.getFileType(fullPath).then((fileType): AGFNode =>
-							new AGFNode(path.parse(name).name, fileType == fsutil.FsFileType.Directory ? collapsedState : noneState, fullPath, fileType, scriptType, initFile, icon))
+							new AGFNode(path.parse(name).name, fileType == fsutil.FsFileType.Directory ? collapsedState : noneState, fullPath, fileType, scriptIcon, initFile, icon))
 					);
 				}
 				const result = Promise.all(nodePromises);
 				if (typeof this.sorting[node.filepath] !== "undefined") {
-					result.then((results): AGFNode[] => results.sort((a, b): number => (this.sorting[a.filepath] - this.sorting[b.filepath])));
+					// Sort top-level items:
+					//return result.then((results): AGFNode[] => results.sort((a, b): number => (this.sorting[a.filepath] - this.sorting[b.filepath])));
+					//return result.then((results) => this.sortNodes(results));
+					return result.then((results) => {
+						if (results[0] && typeof this.sorting[results[0].filepath] !== "undefined") {
+							return results.sort((a, b): number => (this.sorting[a.filepath] - this.sorting[b.filepath]));
+						} else {
+							return this.sortNodes(results);
+						}
+					});
+				} else {
+					// Sort:
+					return result.then((results) => this.sortNodes(results));
 				}
-				return result;
+				//return result;
 			});
 		} else {
-			return fsutil.readDir(srcDir).then((filepaths): Promise<AGFNode[]> => {
+			return fsutil.readDir(srcDir).then(async (filepaths): Promise<AGFNode[]> => {
 				const nodePromises: Promise<AGFNode>[] = [];
 				for (const filepath of filepaths) {
 					const fullPath = path.join(srcDir, filepath);
 					const name = path.basename(filepath);
 					if (name === "_framework") continue;
 					const icon = this.specialIcons[fullPath];
-					const scriptType = this.determineScriptType(fullPath);
+					const scriptIcon = await this.determineScriptIcon(fullPath);
 					nodePromises.push(
 						fsutil.getFileType(fullPath).then((fileType): AGFNode =>
-							new AGFNode(path.parse(name).name, fileType == fsutil.FsFileType.Directory ? collapsedState : noneState, fullPath, fileType, scriptType, undefined, icon))
+							new AGFNode(path.parse(name).name, fileType == fsutil.FsFileType.Directory ? collapsedState : noneState, fullPath, fileType, scriptIcon, undefined, icon))
 					);
 				}
 				return Promise.all(nodePromises).then((results): AGFNode[] => results.sort((a, b): number => (this.sorting[a.label] - this.sorting[b.label])));
@@ -128,21 +159,29 @@ export class AGFTreeDataProvider implements vscode.TreeDataProvider<AGFNode> {
 		}
 	}
 
-	private determineScriptType = (filepath: string): ScriptType => {
+	private isNested = async (filepath: string): Promise<boolean> => {
+		const dir = path.dirname(filepath);
+		const initFile = await fsutil.getInitFile(dir);
+		return initFile ? true : false;
+	}
+
+	private determineScriptIcon = async (filepath: string): Promise<string> => {
 		const clientControllers = path.join(this.treeBasepath, "src", "Client", "Controllers");
 		const serverServices = path.join(this.treeBasepath, "src", "Server", "Services");
 		const filedir = path.parse(filepath).dir;
-		if (filedir == clientControllers) {
-			return ScriptType.Local;
-		} else if (filedir == serverServices) {
-			return ScriptType.Server;
+		if (filedir.startsWith(clientControllers)) {
+			const isNested = await this.isNested(filepath);
+			return path.join(distFolder, isNested ? scriptModulePng : scriptLocalPng);
+		} else if (filedir.startsWith(serverServices)) {
+			const isNested = await this.isNested(filepath);
+			return path.join(distFolder, isNested ? scriptModulePng : scriptPng);
 		} else {
-			return ScriptType.Module;
+			return path.join(distFolder, scriptModulePng);
 		}
 	}
 
 	public refresh = (): void => {
-		this._onDidChangeTreeData.fire();
+		this._onDidChangeTreeData.fire(undefined);
 	}
 
 }
@@ -163,6 +202,12 @@ export class AGFExplorer {
 				});
 			}
 		});
+		// try {
+		// 	const results = fs.readdirSync(path.join(path.dirname(__dirname), "dist", "resources"));
+		// 	log.info("DIR", results);
+		// } catch(e) {
+		// 	log.error(e);
+		// }
 	}
 
 	public refresh = (): void => {
