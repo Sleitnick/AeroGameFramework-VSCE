@@ -178,3 +178,15 @@ export function getInitFile(filepath: string): Promise<string | undefined> {
 		return initFilepath;
 	});
 }
+
+export function readFile(filepath: string): Promise<string> {
+	return new Promise((resolve, reject) => {
+		fs.readFile(filepath, "utf8", (err, data) => {
+			if (err) {
+				reject(err);
+				return;
+			}
+			resolve(data);
+		});
+	});
+}

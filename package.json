@@ -56,6 +56,11 @@
 				"command": "extension.agfrefresh",
 				"title": "AeroGameFramework: Refresh",
 				"icon": "dist/resources/arrow_refresh.png"
+			},
+			{
+				"command": "extension.agfupdater",
+				"title": "AeroGameFramework: Update",
+				"icon": "dist/resources/folder_add.png"
 			}
 		],
 		"keybindings": [
@@ -69,6 +74,11 @@
 			"view/title": [
 				{
 					"command": "extension.agfcreate",
+					"group": "navigation",
+					"when": "view == agfexplorerview"
+				},
+				{
+					"command": "extension.agfupdater",
 					"group": "navigation",
 					"when": "view == agfexplorerview"
 				}

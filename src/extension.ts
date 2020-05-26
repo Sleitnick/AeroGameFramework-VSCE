@@ -10,6 +10,8 @@ import * as rojoTemplates from "./rojoTemplates";
 import selene from "./selene";
 import { AGFExplorer, AGFNode } from "./agfExplorer";
 
+import "../resources/updater.html";
+
 interface EnvTypeCustom {
 	isDir: boolean;
 	path: string;
@@ -414,10 +416,17 @@ export function activate(context: vscode.ExtensionContext): void {
 		agfExplorer.refresh();
 	});
 
+	const agfUpdater = vscode.commands.registerCommand("extension.agfupdater", async (): Promise<void> => {
+		const panel = vscode.window.createWebviewPanel("updater", "AGF Updater", vscode.ViewColumn.One, {});
+		const htmlFilepath = path.join(path.dirname(__dirname), "dist", "resources", "updater.html");
+		const htmlContent = await fsutil.readFile(htmlFilepath);
+		panel.webview.html = htmlContent;
+	});
+
 	const agfStatusBarItem: vscode.StatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
 	agfStatusBarItem.command = "extension.agfcreate";
 	agfStatusBarItem.text = "$(code) AGF";
-	context.subscriptions.push(agf, agfCreateMenu, agfCreateFolderMenu, agfDeleteMenu, agfStatusBarItem, agfRefresh);
+	context.subscriptions.push(agf, agfCreateMenu, agfCreateFolderMenu, agfDeleteMenu, agfStatusBarItem, agfRefresh, agfUpdater);
 	agfStatusBarItem.show();
 	
 }
