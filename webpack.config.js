@@ -39,15 +39,25 @@ module.exports = {
 				]
 			},
 			{
-				test: /\.(png|svg|jpg|gif|html)$/,
+				test: /\.(png|svg|jpg|gif|html|js)$/,
 				exclude: /node_modules/,
 				use: {
 					loader: "file-loader",
 					options: {
-						name: "resources/[name].[ext]"
+						name: "[path][name].[ext]"
 					}
 				}
 			},
+			// {
+			// 	test: /media\/.*\.(js|css|html)$/,
+			// 	exclude: /node_modules/,
+			// 	use: {
+			// 		loader: "file-loader",
+			// 		options: {
+			// 			name: "media/[name].[ext]"
+			// 		}
+			// 	}
+			// },
 			{
 				test: /node_modules\/trash\/(index\.js)/,
 				use: {

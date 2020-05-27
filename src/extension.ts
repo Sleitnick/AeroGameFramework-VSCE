@@ -6,11 +6,12 @@ import * as filelist from "./filelist";
 import * as fsutil from "./fsutil";
 import * as luaTemplates from "./luaTemplates";
 import * as rojoTemplates from "./rojoTemplates";
+import { Updater } from "./updater";
 //import * as log from "./log";
 import selene from "./selene";
 import { AGFExplorer, AGFNode } from "./agfExplorer";
 
-import "../resources/updater.html";
+import "../resources/updater/main.js";
 
 interface EnvTypeCustom {
 	isDir: boolean;
@@ -417,10 +418,15 @@ export function activate(context: vscode.ExtensionContext): void {
 	});
 
 	const agfUpdater = vscode.commands.registerCommand("extension.agfupdater", async (): Promise<void> => {
-		const panel = vscode.window.createWebviewPanel("updater", "AGF Updater", vscode.ViewColumn.One, {});
-		const htmlFilepath = path.join(path.dirname(__dirname), "dist", "resources", "updater.html");
-		const htmlContent = await fsutil.readFile(htmlFilepath);
-		panel.webview.html = htmlContent;
+		const resourcesFilepath = path.join(path.dirname(__dirname), "dist", "resources");
+		Updater.createOrShow(resourcesFilepath);
+	});
+
+	vscode.window.registerWebviewPanelSerializer(Updater.viewType, {
+		async deserializeWebviewPanel(webviewPanel: vscode.WebviewPanel, state: any) {
+			const resourcesFilepath = path.join(path.dirname(__dirname), "dist", "resources");
+			Updater.revive(webviewPanel, resourcesFilepath);
+		}
 	});
 
 	const agfStatusBarItem: vscode.StatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
