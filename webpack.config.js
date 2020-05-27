@@ -31,7 +31,7 @@ module.exports = {
 		rules: [
 			{
 				test: /\.ts$/,
-				exclude: /node_modules/,
+				exclude: /(node_modules|resources|dist)/,
 				use: [
 					{
 						loader: "ts-loader"
@@ -39,31 +39,12 @@ module.exports = {
 				]
 			},
 			{
-				test: /\.(png|svg|jpg|gif|html|js)$/,
-				exclude: /node_modules/,
+				test: /\.(png|svg|jpg|gif|html)$/,
+				exclude: /(node_modules|dist)/,
 				use: {
 					loader: "file-loader",
 					options: {
 						name: "[path][name].[ext]"
-					}
-				}
-			},
-			// {
-			// 	test: /media\/.*\.(js|css|html)$/,
-			// 	exclude: /node_modules/,
-			// 	use: {
-			// 		loader: "file-loader",
-			// 		options: {
-			// 			name: "media/[name].[ext]"
-			// 		}
-			// 	}
-			// },
-			{
-				test: /node_modules\/trash\/(index\.js)/,
-				use: {
-					loader: "file-loader",
-					options: {
-						name: "trash/[name].[ext]"
 					}
 				}
 			}

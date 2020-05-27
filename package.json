@@ -137,7 +137,7 @@
 		}
 	},
 	"scripts": {
-		"vscode:prepublish": "webpack --mode production",
+		"vscode:prepublish": "webpack --mode production && webpack --config webpack-updater.config.js --mode production",
 		"webpack": "webpack --mode development",
 		"webpack-dev": "webpack --mode development --watch --info-verbosity verbose",
 		"cp-trash": "rm -rf dist/trash && mkdir dist/trash",

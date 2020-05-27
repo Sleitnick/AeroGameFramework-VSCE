@@ -1,9 +1,17 @@
-console.log("Test");
+function getLatestReleaseInfo() {
+	return fetch("https://api.github.com/repos/Sleitnick/AeroGameFramework/releases/latest").then((res) => {
+		return res.json();
+	});
+}
 
-const testElement = document.getElementById("test");
+const loadingEl = document.getElementById("loading");
+const contentEl = document.getElementById("content");
+const latestEl = document.getElementById("latest");
+const latestDescEl = document.getElementById("latest-desc");
 
-let i = 0;
-setInterval(() => {
-	i++;
-	testElement.innerHTML = "Hello from JS " + i;
-}, 500);
+getLatestReleaseInfo().then((release) => {
+	loadingEl.style.display = "none";
+	latestEl.innerHTML = `Latest AGF release: <a href="${release.html_url}" target="_blank">${release.tag_name}</a>`;
+	latestDescEl.innerHTML = release.body.split("\r\n").map((para) => `<p>${para}</p>`).join("");
+	contentEl.style.display = "block";
+});

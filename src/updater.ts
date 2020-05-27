@@ -67,20 +67,31 @@ export class Updater {
 	}
 
 	private _getHtmlForWebview(webview: vscode.Webview) {
-		const scriptPath = vscode.Uri.file(path.join(this._extensionPath, "updater", "main.js"));
-		const scriptUri = webview.asWebviewUri(scriptPath);
 		const nonce = getNonce();
+		const scripts = ["proact.js", "main.js"];
+		const scriptUris = scripts.map((scriptName) => {
+			const uri = webview.asWebviewUri(vscode.Uri.file(path.join(this._extensionPath, "updater", scriptName)));
+			return `<script nonce="${nonce}" src="${uri}"></script>`;
+		});
 		return `<!DOCTYPE html>
 			<html lang="en">
 				<head>
 					<meta charset="utf-8">
-					<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource} https:; script-src 'nonce-${nonce}';">
+					<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src ${webview.cspSource} https:; script-src 'nonce-${nonce}'; connect-src https://*.github.com;">
 					<meta name="viewport" content="width=device-width, initial-scale=1.0">
 				</head>
 				<body>
 					<h1>AGF Updater</h1>
-					<p id="test">Test</p>
-					<script nonce="${nonce}" src="${scriptUri}"></script>
+					<p id="loading">Loading...</p>
+					<div id="content" style="display: none">
+						<h2>Latest release</h2>
+						<h3 id="latest"></h3>
+						<div id="latest-desc"></div>
+						<h2>Current version</h2>
+						<h3 id="current">1.6.0</h3>
+						<button id="update">Update</button>
+					</div>
+					${scriptUris.join("")}
 				</body>
 			</html>`;
 	}
