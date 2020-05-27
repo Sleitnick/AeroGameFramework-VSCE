@@ -68,7 +68,7 @@ export class Updater {
 
 	private _getHtmlForWebview(webview: vscode.Webview) {
 		const nonce = getNonce();
-		const scripts = ["proact.js", "main.js"];
+		const scripts = ["main.js"];
 		const scriptUris = scripts.map((scriptName) => {
 			const uri = webview.asWebviewUri(vscode.Uri.file(path.join(this._extensionPath, "updater", scriptName)));
 			return `<script nonce="${nonce}" src="${uri}"></script>`;

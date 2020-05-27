@@ -12,7 +12,6 @@ import selene from "./selene";
 import { AGFExplorer, AGFNode } from "./agfExplorer";
 
 import "../resources/updater/main.js";
-import "../resources/updater/proact.js";
 
 interface EnvTypeCustom {
 	isDir: boolean;
