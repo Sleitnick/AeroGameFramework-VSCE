@@ -423,7 +423,7 @@ export function activate(context: vscode.ExtensionContext): void {
 	});
 
 	vscode.window.registerWebviewPanelSerializer(Updater.viewType, {
-		async deserializeWebviewPanel(webviewPanel: vscode.WebviewPanel, state: any) {
+		async deserializeWebviewPanel(webviewPanel: vscode.WebviewPanel) {
 			const resourcesFilepath = path.join(path.dirname(__dirname), "dist", "resources");
 			Updater.revive(webviewPanel, resourcesFilepath);
 		}

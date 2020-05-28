@@ -31,7 +31,11 @@ module.exports = {
 		rules: [
 			{
 				test: /\.ts$/,
-				exclude: /(node_modules|resources|dist)/,
+				exclude: [
+					/node_modules/,
+					/resources/,
+					/dist/
+				],
 				use: [
 					{
 						loader: "ts-loader"
@@ -39,7 +43,7 @@ module.exports = {
 				]
 			},
 			{
-				test: /\.(png|svg|jpg|gif|html)$/,
+				test: /\.(png|svg|jpg|gif|js)$/,
 				exclude: /(node_modules|dist)/,
 				use: {
 					loader: "file-loader",
