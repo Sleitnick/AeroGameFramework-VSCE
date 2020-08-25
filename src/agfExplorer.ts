@@ -41,10 +41,6 @@ export class AGFNode extends vscode.TreeItem {
 		this.iconPath = iconOverride || (fileType == fsutil.FsFileType.Directory && !initFile ? path.join(distFolder, folderPng) : scriptIcon);
 	}
 
-	public get tooltip(): string {
-		return this.label;
-	}
-
 	public contextValue = "node";
 
 }
