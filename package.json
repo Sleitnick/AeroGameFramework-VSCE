@@ -22,7 +22,7 @@
 	},
 	"homepage": "https://github.com/Sleitnick/AeroGameFramework-VSCE/blob/master/README.md",
 	"engines": {
-		"vscode": "^1.45.1"
+		"vscode": "^1.48.0"
 	},
 	"categories": [
 		"Other"
