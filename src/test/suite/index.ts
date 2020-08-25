@@ -6,7 +6,7 @@ export function run(): Promise<void> {
     const mocha = new Mocha({
         ui: "tdd"
     });
-    mocha.useColors(true);
+    //mocha.useColors(true);
     const testsRoot = path.resolve(__dirname, "..");
     return new Promise((resolve, reject): void => {
         glob("**/**.test.js", {cwd: testsRoot}, (err, files): void => {

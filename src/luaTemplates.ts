@@ -79,7 +79,7 @@ end
 return ${name}`;
 }
 
-const templateMapping: {[env: string]: {[type: string]: Function}} = {
+const templateMapping: {[env: string]: {[type: string]: (name: string) => string}} = {
 	"Server": {
 		"Service": serviceTemplate,
 		"Module": moduleTemplate,
@@ -102,4 +102,24 @@ export function getTemplate(env: string, type: string, name: string): string {
 	} else {
 		return moduleTemplate(name);
 	}
+}
+
+export function getSettingsTemplate(name: string): string {
+	return `-- Settings for ${name}
+
+return {
+
+	-- Execution order for Init stage:
+	-- Order = 1000;
+
+	-- Prevent Init from being invoked:
+	-- PreventInit = false;
+
+	-- Prevent Start from being invoked:
+	-- PreventStart = false;
+
+	-- Prevent any AGF metatable wrapping. Should be used for third-party modules:
+	-- Standalone = false;
+
+}`;
 }
