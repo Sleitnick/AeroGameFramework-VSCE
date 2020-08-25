@@ -1,6 +1,6 @@
 # Changelog
 
-## Alpha 0.0.21
+## Alpha 0.0.22
 
 - Allow creating Settings files for AeroGameFramework ^v1.7.0
 

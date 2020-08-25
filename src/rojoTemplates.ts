@@ -22,6 +22,10 @@ export const Rojo4 = JSON.stringify({
 			"path": "src/Shared",
 			"target": "ReplicatedStorage.Aero.Shared"
 		},
+		"_ReplicatedStorage": {
+			"path": "src/_framework/rep_internal",
+			"target": "ReplicatedStorage.Aero.Internal"
+		},
 		"_ReplicatedFirst": {
 			"path": "src/_framework/rep_first",
 			"target": "ReplicatedFirst.Aero"
@@ -47,6 +51,9 @@ export const Rojo5 = JSON.stringify({
 				"$className": "Folder",
 				"Shared": {
 					"$path": "src/Shared"
+				},
+				"Internal": {
+				  "$path": "src/_framework/rep_internal"
 				}
 			}
 		},
