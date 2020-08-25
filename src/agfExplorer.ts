@@ -8,6 +8,7 @@ import scriptPng from "../resources/script.png";
 import scriptLocalPng from "../resources/script_local.png";
 import scriptModulePng from "../resources/script_module.png";
 import folderPng from "../resources/folder.png";
+import settingsPng from "../resources/settings.png";
 
 import "../resources/logo.svg";
 import "../resources/logo_256.png";
@@ -19,6 +20,7 @@ import "../resources/page_code.png";
 import "../resources/table.png";
 import "../resources/user.png";
 import "../resources/server.png";
+import "../resources/settings.png";
 //import "../resources/arrow_refresh.png";
 
 const distFolder = path.join(path.dirname(__dirname), "dist");
@@ -166,6 +168,9 @@ export class AGFTreeDataProvider implements vscode.TreeDataProvider<AGFNode> {
 	}
 
 	private determineScriptIcon = async (filepath: string): Promise<string> => {
+		if (filepath.endsWith(".settings.lua") || filepath.endsWith(".settings.client.lua") || filepath.endsWith(".settings.server.lua")) {
+			return path.join(distFolder, settingsPng);
+		}
 		const clientControllers = path.join(this.treeBasepath, "src", "Client", "Controllers");
 		const serverServices = path.join(this.treeBasepath, "src", "Server", "Services");
 		const filedir = path.parse(filepath).dir;

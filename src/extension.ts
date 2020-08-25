@@ -393,6 +393,22 @@ export function activate(context: vscode.ExtensionContext): void {
 		}
 	});
 
+	const agfCreateSettingsMenu = vscode.commands.registerCommand("extension.agfcreatesettings", async (node: AGFNode): Promise<void> => {
+		if (!node) return;
+		const filepath = node.filepath;
+		// Stop if not a Lua module file:
+		if ((!filepath.endsWith(".lua")) || filepath.endsWith(".settings.lua") || filepath.endsWith(".client.lua") || filepath.endsWith(".server.lua")) return;
+		// Create settings file:
+		const pathInfo = path.parse(filepath);
+		const settingsFilepath = path.join(pathInfo.dir, `${pathInfo.name}.settings.lua`);
+		const data = luaTemplates.getSettingsTemplate(pathInfo.name);
+		await fsutil.createFileIfNotExist(settingsFilepath, data);
+		vscode.window.showInformationMessage(`Created settings for ${pathInfo.name}`);
+		const doc = await vscode.workspace.openTextDocument(settingsFilepath);
+		vscode.window.showTextDocument(doc, {preserveFocus: true});
+		agfExplorer.refresh();
+	});
+
 	const agfDeleteMenu = vscode.commands.registerCommand("extension.agfdelete", async (node: AGFNode): Promise<void> => {
 		if (!node) return;
 		let deleteFunc: (filepath: string) => Promise<void>;
@@ -417,7 +433,7 @@ export function activate(context: vscode.ExtensionContext): void {
 	const agfStatusBarItem: vscode.StatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
 	agfStatusBarItem.command = "extension.agfcreate";
 	agfStatusBarItem.text = "$(code) AGF";
-	context.subscriptions.push(agf, agfCreateMenu, agfCreateFolderMenu, agfDeleteMenu, agfStatusBarItem, agfRefresh);
+	context.subscriptions.push(agf, agfCreateMenu, agfCreateFolderMenu, agfCreateSettingsMenu, agfDeleteMenu, agfStatusBarItem, agfRefresh);
 	agfStatusBarItem.show();
 	
 }
