@@ -1,11 +1,11 @@
 .vscode
 .vscode-test
-out/
-src/
+out
+src
 tsconfig.json
 webpack.config.json
 .gitignore
 .eslintrc.js
-/resources
+resources
 node_modules
 *.vsix
