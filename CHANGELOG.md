@@ -1,5 +1,9 @@
 # Changelog
 
+## Alpha 0.0.23
+
+- Fix for creating Settings files for folder-based modules
+
 ## Alpha 0.0.22
 
 - Allow creating Settings files for AeroGameFramework ^v1.7.0

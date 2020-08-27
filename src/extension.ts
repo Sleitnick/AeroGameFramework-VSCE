@@ -397,7 +397,9 @@ export function activate(context: vscode.ExtensionContext): void {
 		if (!node) return;
 		const filepath = node.filepath;
 		// Stop if not a Lua module file:
-		if ((!filepath.endsWith(".lua")) || filepath.endsWith(".settings.lua") || filepath.endsWith(".client.lua") || filepath.endsWith(".server.lua")) return;
+		const isDir = await fsutil.isDir(filepath);
+		const initFile = (isDir ? await fsutil.getInitFile(filepath) : undefined);
+		if (!initFile && ((!filepath.endsWith(".lua")) || filepath.endsWith(".settings.lua") || filepath.endsWith(".client.lua") || filepath.endsWith(".server.lua"))) return;
 		// Create settings file:
 		const pathInfo = path.parse(filepath);
 		const settingsFilepath = path.join(pathInfo.dir, `${pathInfo.name}.settings.lua`);
